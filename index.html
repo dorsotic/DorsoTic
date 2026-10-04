@@ -20,7 +20,7 @@ h2{font-size:1.3rem;margin:34px 0 12px}
 .view{animation:rise .35s ease-out}
 .door{background:var(--panel);border:2px solid var(--line);border-radius:var(--r) var(--r) 0 0;padding:22px;position:relative}
 .door::after{content:"";position:absolute;right:16px;top:50%;width:10px;height:10px;border-radius:50%;background:var(--brass);animation:glow 3s ease-in-out infinite}
-label{display:block;margin:12px 0 0;font-size:.92rem;color:var(--mute)}
+label,.lbl{display:block;margin:12px 0 0;font-size:.92rem;color:var(--mute)}
 input,textarea,select{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;font:inherit;transition:border-color .2s,box-shadow .2s}
 input:focus,textarea:focus,select:focus{border-color:var(--brass);box-shadow:0 0 0 3px rgba(201,162,75,.2);outline:none}
 textarea{min-height:84px;resize:vertical}
@@ -52,6 +52,15 @@ button.bad{background:#a5473a;color:#fff}
 .pick{display:flex;gap:2px;margin-top:6px}
 .pick button{background:none;color:var(--line);font-size:1.7rem;padding:0 3px;transition:color .15s,transform .15s}
 .pick button.on{color:var(--brass);transform:scale(1.18)}
+.pk{position:relative}
+.pk-btn{width:100%;text-align:left;margin-top:4px;font-weight:400;background:var(--bg)}
+.pk-panel{position:absolute;left:0;right:0;top:100%;z-index:5;margin-top:4px;background:var(--panel);border:1px solid var(--brass);border-radius:var(--r);padding:8px;animation:rise .2s ease-out}
+.pk-panel[hidden]{display:none}
+.pk-q{margin:0 0 6px;padding:7px 10px;font-size:.92rem}
+.pk-list{max-height:240px;overflow:auto}
+.pk-i{padding:7px 10px;border-radius:4px;cursor:pointer;color:var(--text);transition:background .15s}
+.pk-i:hover,.pk-i:focus{background:rgba(201,162,75,.15);outline:none}
+.pk-i.on{color:var(--brass);font-weight:700}
 .empty{color:var(--mute)}
 footer{border-top:1px solid var(--line);padding:18px;text-align:center;color:var(--mute)}
 footer .stars{font-size:1.5rem}
@@ -127,12 +136,32 @@ async function go(v) {
   if (v === "home") await home(box); else if (v === "login") login(box); else await staffView(box);
 }
 
+/* ---------- Выбор достижения с поиском ---------- */
+function picker(items) {
+  let val = "";
+  const btn = h("button", {type:"button", class:"ghost pk-btn"}, "Выбери достижение");
+  const q = h("input", {class:"pk-q", placeholder:"Поиск…", "aria-label":"Поиск достижения"});
+  const ul = h("div", {class:"pk-list", role:"listbox"});
+  const panel = h("div", {class:"pk-panel"}, q, ul); panel.hidden = true;
+  const el = h("div", {class:"pk"}, btn, panel);
+  const pick = n => { val = n; btn.textContent = n || "Выбери достижение"; panel.hidden = true; };
+  const draw = () => {
+    const s = q.value.trim().toLowerCase(), m = items.filter(n => n.toLowerCase().includes(s));
+    ul.replaceChildren(...(m.length ? m.map(n => h("div", {class:"pk-i" + (n === val ? " on" : ""), role:"option", tabindex:"0", onclick:() => pick(n), onkeydown:e => { if (e.key === "Enter") pick(n); }}, n))
+      : [h("div", {class:"pk-i empty"}, items.length ? "Ничего не найдено" : "Список достижений пока пуст")]));
+  };
+  btn.onclick = () => { panel.hidden = !panel.hidden; if (!panel.hidden) { q.value = ""; draw(); q.focus(); } };
+  q.oninput = draw;
+  document.addEventListener("click", e => { if (!el.contains(e.target)) panel.hidden = true; });
+  return {el, get:() => val, set:pick};
+}
+
 /* ---------- Главная ---------- */
 async function home(box) {
   const { data: list } = await db.from("achievements").select("name").order("name");
   const names = new Set((list || []).map(a => a.name));
   const nick = h("input", {maxlength:40, placeholder:"Ник в Roblox"});
-  const ac = h("input", {list:"achs", maxlength:100, placeholder:"Начни вводить название"});
+  const pk = picker((list || []).map(a => a.name));
   const plat = h("select", {}, h("option", {value:"discord"}, "Discord"), h("option", {value:"telegram"}, "Telegram"));
   const un = h("input", {maxlength:40, placeholder:"@username"});
   const note = h("textarea", {maxlength:300});
@@ -144,23 +173,23 @@ async function home(box) {
     msg.className = "msg err";
     if (site.value) return;
     const u = un.value.trim().replace(/^@/, "");
-    if (!nick.value.trim() || !names.has(ac.value.trim())) { msg.textContent = "Укажи ник и выбери достижение из списка."; return; }
+    if (!nick.value.trim() || !names.has(pk.get())) { msg.textContent = "Укажи ник и выбери достижение из списка."; return; }
     if (!/^[A-Za-z0-9_.]{2,32}$/.test(u)) { msg.textContent = "Юзернейм: буквы, цифры, _ и точка, например @DorsoNews."; return; }
     if (Date.now() - (+localStorage.getItem("last") || 0) < 60000) { msg.textContent = "Подожди минуту перед следующей заявкой."; return; }
     btn.disabled = true;
     const token = crypto.randomUUID();
-    const { error } = await db.from("requests").insert({token, nickname:nick.value.trim(), achievement:ac.value.trim(), platform:plat.value, username:"@" + u, note:note.value.trim() || null});
+    const { error } = await db.from("requests").insert({token, nickname:nick.value.trim(), achievement:pk.get(), platform:plat.value, username:"@" + u, note:note.value.trim() || null});
     btn.disabled = false;
     if (error) { msg.textContent = "Не получилось отправить. Попробуй позже."; return; }
     saveToks([...toks(), token]);
     try { localStorage.setItem("last", Date.now()); } catch {}
-    [nick, ac, un, note].forEach(i => i.value = "");
+    [nick, un, note].forEach(i => i.value = ""); pk.set("");
     msg.className = "msg good"; msg.textContent = "Заявка отправлена. С тобой свяжутся в выбранном мессенджере.";
     drawMine(mine);
   };
   box.append(h("h1", {}, "DorsoTic"), h("p", {class:"sub"}, "Помощь с достижениями в DOORS. Оставь заявку, и с тобой свяжется помощник."),
-    h("div", {class:"door"}, h("datalist", {id:"achs"}, (list || []).map(a => h("option", {value:a.name}))),
-      fld("Ник в Roblox", nick), fld("Какое достижение нужно", ac),
+    h("div", {class:"door"},
+      fld("Ник в Roblox", nick), h("div", {class:"lbl"}, "Какое достижение нужно", pk.el),
       h("div", {class:"row"}, fld("Где связаться", plat), fld("Юзернейм", un)),
       fld("Комментарий (по желанию)", note), site, btn, msg), mine);
   drawMine(mine);
