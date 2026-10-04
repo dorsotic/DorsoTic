@@ -11,13 +11,7 @@
 <meta property="og:description" content="Оставь заявку, и помощник поможет получить достижения в DOORS.">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
-@font-face{
-  font-family:"Doors";
-  src:url("Doors%20Cyrillic%20Font.ttf") format("truetype");
-  font-display:swap;
-  font-weight:400;
-  font-style:normal;
-}
+/* ВСТАВЬ СЮДА СВОЙ @font-face{font-family:"Doors";...} БЕЗ ИЗМЕНЕНИЙ */
 :root{--bg:#17100e;--panel:#251915;--panel2:#2e201a;--line:#46322a;--text:#f1e6d3;--mute:#a8927c;--brass:#d4ac55;--ok:#8fb573;--wait:#e0905f;--r:10px;--f:"Doors",Georgia,serif}
 *{box-sizing:border-box}
 body{margin:0;color:var(--text);font:16px/1.55 Georgia,"Times New Roman",serif;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
@@ -29,7 +23,7 @@ nav{display:flex;gap:8px;flex-wrap:wrap}
 nav button.cur{border-color:var(--brass);color:var(--brass)}
 main{flex:1;width:100%;max-width:760px;margin:0 auto;padding:36px 18px 48px;transition:max-width .3s}
 main.wide{max-width:1000px}
-h1,h2,.logo,.go,.tabs button,footer div:first-child,.step .n,.stat span{font-family:var(--f);font-weight:400;letter-spacing:.05em}
+h1,h2{font-family:var(--f);font-weight:400;letter-spacing:.05em}
 h1{font-size:3.2rem;line-height:1.05;margin:0 0 10px;color:var(--brass);text-shadow:0 0 30px rgba(212,172,85,.3)}
 h2{font-size:1.6rem;margin:36px 0 14px}
 .sub{color:var(--mute);margin:0 0 30px}
@@ -191,24 +185,125 @@ const toks = () => { try { return JSON.parse(localStorage.getItem("tk") || "[]")
 const saveToks = a => { try { localStorage.setItem("tk", JSON.stringify(a.slice(-5))); } catch {} };
 
 const CAT = {
-"Welcome":["e","Зайти в игру впервые"],"Welcome Back":["e","Зайти в другой день"],"Buddy System":["e","Сыграть забег с другом"],
-"Group Member":["e","Вступить в группу LSPLASH (даёт ревайв)"],"Back From The Dead":["e","Воскресить себя"],"One Of Many":["e","Умереть в первый раз"],
-"In Plain Sight":["e","Спрятаться от сущности, оставшись вне поля зрения"],"Out Of My Way":["e","Пережить Rush"],"Look at Me":["e","Пережить Eyes"],
-"Two Steps Forward...":["e","Пережить Halt"],"Rebound":["e","Пережить Ambush"],"Supporting Small Businesses":["e","Купить предмет у Джеффа"],
-"Pls Donate":["e","Наполнить банку чаевых Джеффа"],"Herb Of Viridis":["e","Найти и использовать зелёную траву"],
-"Lost In Translation":["e","Превратить предмет в Рифте"],"Interconnected":["e","Сохранить предмет в Рифте"],
-"Quick Purchase":["e","Archives: купить Shakelight в автомате"],"Unpatched Dupe Glitch":["e","Archives: скопировать предмет на принтере"],
-"Feed the Fih":["e","Archives: покормить рыбку в аквариуме"],
-"Ten Of Many":["m","Умереть 10 раз"],"You Can Run":["m","Успешно убежать от Seek"],"Sshh!":["m","Выбраться из Библиотеки"],
-"Whoever Smelt It":["m","Пережить утечку Firedamp (Шахты)"],"Shock Hazard":["m","Пережить Currents"],"Bubble Popping":["m","Лопнуть Stem броском"],
-"Unbound":["m","Использовать Крест против Ambush"],"Take A Breather":["m","Использовать Крест против Seek"],
-"Expert Technician":["h","Пройти головоломку с щитком меньше чем за минуту"],"Betrayal":["h","Забрать укрытие у игрока прямо перед его смертью"],
-"It's Not My Time":["h","Использовать Крест против Dread"],"Trespassing":["h","Сбежать из Гнезда (Nest)"],"Down The Drain":["h","Победить Seek в Плотине"],
-"Firewall":["h","Archives: откупиться от Ransom"],"You win!":["h","BATTLE: занять 1 место в раунде"],"A Triple":["h","BATTLE: устранить 3 игроков"],
-"That's a good point!":["h","BATTLE: набрать 2500 очков за раунд"],"High Roller":["h","BATTLE: набрать 5000 очков за раунд"]};
-const CAT2 = {"D'oh!": ["e", "Съесть пончик"], "Feed the Birds": ["e", "Покормить птицу хлебом Caw Bread"], "You Finally Turn Green": ["e", "Выпить Gween Soda и позеленеть"], "Paperclip Challenge": ["e", "Заработать золото на Depot"], "Mission Successful": ["e", "Archives: смыть унитаз, включить раковину и сушилку подряд"], "Patience": ["e", "Archives: пройти всю очередь до конца"], "Eviction Notice": ["e", "Быть выброшенным из укрытия сущностью Hide"], "I See You": ["e", "Увернуться от атаки Screech"], "Wrong Room": ["e", "Попасться на обман Dupe"], "Detour": ["e", "Зайти в The Rooms"], "Around Back": ["e", "Зайти в The Backdoor"], "Dead Of Night": ["m", "Пережить Dread"], "Just A Prank": ["m", "Пережить Giggle"], "I Don't Believe My Eyes": ["m", "Пережить стаю Gloombats"], "Playtime": ["m", "Дать Салли новую игрушку"], "Trade Offer": ["m", "Обменяться с Луи"], "A Bone To Pick": ["m", "Открыть Skull Lock скелетным ключом"], "Picking Flowers": ["m", "Получить Лотос у Грэмпи"], "Rebirth": ["m", "Возродиться через Лотос"], "Improvise": ["m", "Вставить отмычку в генератор"], "Running Track": ["m", "Убежать от Seek в Шахтах"], "Fried Mushrooms": ["m", "Сжечь Meld пожарной сигнализацией"], "It's Still You": ["m", "Archives: смотреть в зеркало, пока не появится Portrait"], "It's Not Funny": ["m", "Использовать Крест против Giggle"], "Bug Bomb": ["m", "Использовать Крест против стаи Gloombats (в Roblox: Flyswatter)"], "Back On Track": ["m", "Выбраться из The Rooms"], "Other Way Around": ["m", "Выбраться из The Backdoor"], "Helping Hand": ["h", "Сбросить Giggle с лица другого игрока"], "Trickshot": ["h", "Ударить Giggle и оглушить его светящейся палочкой"], "Rage Room": ["h", "Archives: успешно обезвредить Noise"], "The Bigger They Are": ["h", "Использовать Крест против Grumble в комнате 150"]};
-Object.assign(CAT, CAT2);
-const DIF = {e:"Лёгкая", m:"Средняя", h:"Сложная"};
+  "Welcome": true,
+  "Welcome Back": true,
+  "Buddy System": true,
+  "Group Member": true,
+  "Back From The Dead": true,
+  "One Of Many": true,
+  "Ten Of Many": true,
+  "Hundred Of Many": true,
+  "In Plain Sight": true,
+  "Out Of My Way": true,
+  "Look at Me": true,
+  "Two Steps Forward...": true,
+  "Rebound": true,
+  "I See You": true,
+  "Wrong Room": true,
+  "Eviction Notice": true,
+  "D'oh!": true,
+  "Meet Jack": true,
+  "Meet Timothy": true,
+  "Error": true,
+  "Sshh!": true,
+  "You Can Run": true,
+  "Supporting Small Businesses": true,
+  "Pls Donate": true,
+  "Herb Of Viridis": true,
+  "Interconnected": true,
+  "Lost In Translation": true,
+  "Expert Technician": true,
+  "Evil Be Gone": true,
+  "Stay Out Of My Way": true,
+  "Unbound": true,
+  "Take A Breather": true,
+  "All Figured Out": true,
+  "You Can't See Me": true,
+  "I Hate You": true,
+  "Two Steps Ahead": true,
+  "Outwitted": true,
+  "It's Not My Time": true,
+  "Not Funny": true,
+  "The Bigger They Are": true,
+  "Queen's Gambit": true,
+  "Bug Zapper": true,
+  "Lost In The Dark": true,
+  "Under New Management": true,
+  "Red Mist": true,
+  "Stop Right There": true,
+  "Grin Reaper": true,
+  "Red Light": true,
+  "Lookman No Looking": true,
+  "Time Out": true,
+  "Bug Bomb": true,
+  "Scammed": true,
+  "Playtime's Over": true,
+  "Rock Bottom": true,
+  "Whoever Smelt It": true,
+  "Improvise": true,
+  "Trespassing": true,
+  "Running Track": true,
+  "Down The Drain": true,
+  "See You Soon": true,
+  "A Bone To Pick": true,
+  "Feed the Birds": true,
+  "Picking Flowers": true,
+  "Rebirth": true,
+  "Touched Grass": true,
+  "Down The Water Spout": true,
+  "You Finally Turn Green": true,
+  "Playtime": true,
+  "Trial And Error": true,
+  "Trade Offer": true,
+  "Helping Hand": true,
+  "Trickshot": true,
+  "Just A Prank": true,
+  "I Don't Believe My Eyes": true,
+  "Fried Mushrooms": true,
+  "It's Not Funny": true,
+  "Rocky Road": true,
+  "A Hard Place": true,
+  "Not Five Stars": true,
+  "Hotel Hell": true,
+  "Around Back": true,
+  "Other Way Around": true,
+  "Forgotten Memories": true,
+  "Going Down": true,
+  "Emergency Exit": true,
+  "Z-50": true,
+  "Going Up": true,
+  "Most Valuable Employee": true,
+  "Star Employee": true,
+  "Now Served": true,
+  "Perfect Memory": true,
+  "Shock Hazard": true,
+  "Witness Protection": true,
+  "Carpet Burn": true,
+  "Limitless Paper": true,
+  "Crowd Watching": true,
+  "Firewall": true,
+  "Gold Standard": true,
+  "Quick Purchase": true,
+  "Unpatched Dupe Glitch": true,
+  "Fih Are Friends": true,
+  "Rage Room": true,
+  "Paparazzi": true,
+  "Bubble Popping": true,
+  "Paperclip Challenge": true,
+  "Storage Wars": true,
+  "Hello Walker": true,
+  "REDACTED": true,
+  "Girl Dinner": true,
+  "Enlightened": true,
+  "Pizza Time": true,
+  "It's Still You": true,
+  "Annihilation": true,
+  "Bad Luck": true,
+  "Smashing Deal": true,
+  "Who Am I?": true,
+  "Patience": true,
+  "Mission Successful": true
+};
 let me = null, profiles = {}, tab = "requests", rf = "new", timer = null, lastNew = null;
 
 async function loadMe() {
@@ -255,34 +350,80 @@ function forum(box) {
 function picker(items, max = 5) {
   const sel = [];
   const btn = h("button", {type:"button", class:"ghost pk-btn"}, "Выбери достижения");
-  const q = h("input", {class:"pk-q", placeholder:"Поиск…", "aria-label":"Поиск достижения"});
+  const q = h("input", {class:"pk-q", placeholder:"Поиск достижения…", "aria-label":"Поиск достижения"});
   const ul = h("div", {class:"pk-list", role:"listbox"});
-  const panel = h("div", {class:"pk-panel"}, q, ul); panel.hidden = true;
+  const panel = h("div", {class:"pk-panel"}, q, ul);
+  panel.hidden = true;
   const tags = h("div");
-  let df = "";
-  const chips = h("div", {class:"fchips"}, [["", "Все"], ["e", "Лёгкие"], ["m", "Средние"], ["h", "Сложные"]].map(([k, l]) => {
-    const b = h("button", {type:"button", class:k === df ? "on" : "", onclick:() => { df = k; [...chips.children].forEach(x => x.classList.toggle("on", x === b)); draw(); }}, l); return b; }));
-  panel.insertBefore(chips, ul);
   const el = h("div", {class:"pk"}, btn, panel, tags);
+
   const refresh = () => {
     btn.textContent = sel.length ? `Выбрано: ${sel.length} из ${max}` : "Выбери достижения";
-    tags.replaceChildren(...sel.map(n => h("span", {class:"tag"}, n, h("button", {type:"button", class:"ghost", "aria-label":"Убрать", onclick:() => toggle(n)}, "×"))));
+    tags.replaceChildren(...sel.map(n =>
+      h("span", {class:"tag"}, n,
+        h("button", {
+          type:"button",
+          class:"ghost",
+          "aria-label":"Убрать",
+          onclick:() => toggle(n)
+        }, "×")
+      )
+    ));
     draw();
   };
+
   const toggle = n => {
     const i = sel.indexOf(n);
-    if (i >= 0) sel.splice(i, 1); else if (sel.length < max) sel.push(n); else return toast(`Не больше ${max} достижений в одной заявке`, 1);
+    if (i >= 0) sel.splice(i, 1);
+    else if (sel.length < max) sel.push(n);
+    else return toast(`Не больше ${max} достижений в одной заявке`, 1);
     refresh();
   };
+
   const draw = () => {
-    const s = q.value.trim().toLowerCase(), m = items.filter(n => (!df || CAT[n]?.[0] === df) && (n.toLowerCase().includes(s) || (CAT[n]?.[1] || "").toLowerCase().includes(s)));
-    ul.replaceChildren(...(m.length ? m.map(n => h("div", {class:"pk-i" + (sel.includes(n) ? " on" : ""), role:"option", tabindex:"0", onclick:() => toggle(n), onkeydown:e => { if (e.key === "Enter") toggle(n); }}, h("div", {class:"t"}, h("span", {}, (sel.includes(n) ? "✓ " : "") + n), CAT[n] ? h("span", {class:"dif " + CAT[n][0]}, DIF[CAT[n][0]]) : null), CAT[n] ? h("small", {}, CAT[n][1]) : null))
-      : [h("div", {class:"pk-i empty"}, items.length ? "Ничего не найдено" : "Список достижений пока пуст")]));
+    const s = q.value.trim().toLowerCase();
+    const m = items.filter(n => n.toLowerCase().includes(s));
+
+    ul.replaceChildren(
+      ...(m.length
+        ? m.map(n => h(
+            "div",
+            {
+              class:"pk-i" + (sel.includes(n) ? " on" : ""),
+              role:"option",
+              tabindex:"0",
+              onclick:() => toggle(n),
+              onkeydown:e => { if (e.key === "Enter") toggle(n); }
+            },
+            h("span", {}, (sel.includes(n) ? "✓ " : "") + n)
+          ))
+        : [h("div", {class:"pk-i empty"}, items.length ? "Ничего не найдено" : "Список достижений пока пуст")]
+      )
+    );
   };
-  btn.onclick = () => { panel.hidden = !panel.hidden; if (!panel.hidden) { q.value = ""; draw(); q.focus(); } };
+
+  btn.onclick = () => {
+    panel.hidden = !panel.hidden;
+    if (!panel.hidden) {
+      q.value = "";
+      draw();
+      q.focus();
+    }
+  };
+
   q.oninput = draw;
-  document.addEventListener("click", e => { if (!el.contains(e.target)) panel.hidden = true; });
-  return {el, get:() => [...sel], clear:() => { sel.length = 0; refresh(); }};
+  document.addEventListener("click", e => {
+    if (!el.contains(e.target)) panel.hidden = true;
+  });
+
+  return {
+    el,
+    get:() => [...sel],
+    clear:() => {
+      sel.length = 0;
+      refresh();
+    }
+  };
 }
 
 /* ---------- Главная ---------- */
@@ -514,11 +655,24 @@ async function tabAch(box) {
   };
   const preset = h("button", {class:"ghost preset", onclick:async () => {
     preset.disabled = true;
-    const { error } = await db.from("achievements").upsert(Object.keys(CAT).map(name => ({name})), {onConflict:"name", ignoreDuplicates:true});
+    const { data: oldRows, error: readError } = await db.from("achievements").select("id");
+    if (readError) {
+      preset.disabled = false;
+      return toast("Не удалось обновить список.", 1);
+    }
+    if (oldRows?.length) {
+      const { error: delError } = await db.from("achievements").delete().in("id", oldRows.map(x => x.id));
+      if (delError) {
+        preset.disabled = false;
+        return toast("Не удалось очистить старый список.", 1);
+      }
+    }
+    const { error } = await db.from("achievements").insert(Object.keys(CAT).map(name => ({name})));
     preset.disabled = false;
     if (error) return toast("Не удалось загрузить список.", 1);
-    toast(`Готовый список загружен: ${Object.keys(CAT).length}`); load();
-  }}, `Загрузить готовый список (${Object.keys(CAT).length})`);
+    toast(`Актуальный список загружен: ${Object.keys(CAT).length}`);
+    load();
+  }}, `Загрузить актуальный список (${Object.keys(CAT).length})`);
   box.append(h("div", {class:"door"}, fld("Добавить достижения", ta), h("button", {class:"go", onclick:async () => {
     const rows = [...new Set(ta.value.split("\n").map(s => s.trim()).filter(Boolean))].map(name => ({name}));
     if (!rows.length) return;
