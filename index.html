@@ -281,7 +281,7 @@ async function home(box) {
   const plat = h("select", {}, h("option", {value:"discord"}, "Discord"), h("option", {value:"telegram"}, "Telegram"));
   const un = h("input", {maxlength:40, placeholder:"@username"});
   const note = h("textarea", {maxlength:300});
-  const reward = h("input", {maxlength:100, placeholder:"Например: предмет, ключ, золото"});
+  const reward = h("input", {maxlength:100, placeholder:"Например: Бочка, зеркало"});
   const site = h("input", {class:"hp", tabindex:"-1", autocomplete:"off", "aria-hidden":"true"});
   const msg = h("div", {class:"msg", role:"status"});
   const mine = h("div");
