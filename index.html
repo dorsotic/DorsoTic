@@ -73,6 +73,15 @@ button.bad{background:#a5473a;color:#fff}
 .pk-i:hover,.pk-i:focus{background:rgba(212,172,85,.16);outline:none}
 .pk-i.on{color:var(--brass);font-weight:700}
 .empty{color:var(--mute)}
+.fchips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
+.fchips button{padding:4px 12px;font-size:.82rem;min-height:0;background:transparent;color:var(--mute);border:1px solid var(--line);box-shadow:none;font-weight:400}
+.fchips button.on{background:var(--brass);color:#241a06;border-color:var(--brass)}
+.dif{display:inline-block;flex:none;padding:0 8px;border-radius:99px;font-size:.72rem;font-weight:700;color:#241a06;margin-left:8px}
+.dif.e{background:var(--ok)}.dif.m{background:var(--brass)}.dif.h{background:var(--wait)}
+.pk-i{display:flex;flex-direction:column;gap:1px}
+.pk-i .t{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pk-i small{color:var(--mute);font-weight:400;font-size:.8rem}
+.preset{margin-top:14px}
 footer{border-top:1px solid var(--line);padding:20px;text-align:center;color:var(--mute);background:rgba(0,0,0,.2)}
 footer .stars{font-size:1.5rem}
 footer div:first-child{font-family:var(--f);letter-spacing:.08em;font-size:1.2rem;color:var(--text)}
@@ -168,6 +177,23 @@ function count(el, n) {
 const toks = () => { try { return JSON.parse(localStorage.getItem("tk") || "[]"); } catch { return []; } };
 const saveToks = a => { try { localStorage.setItem("tk", JSON.stringify(a.slice(-5))); } catch {} };
 
+const CAT = {
+"Welcome":["e","Зайти в игру впервые"],"Welcome Back":["e","Зайти в другой день"],"Buddy System":["e","Сыграть забег с другом"],
+"Group Member":["e","Вступить в группу LSPLASH (даёт ревайв)"],"Back From The Dead":["e","Воскресить себя"],"One Of Many":["e","Умереть в первый раз"],
+"In Plain Sight":["e","Спрятаться от сущности, оставшись вне поля зрения"],"Out Of My Way":["e","Пережить Rush"],"Look at Me":["e","Пережить Eyes"],
+"Two Steps Forward...":["e","Пережить Halt"],"Rebound":["e","Пережить Ambush"],"Supporting Small Businesses":["e","Купить предмет у Джеффа"],
+"Pls Donate":["e","Наполнить банку чаевых Джеффа"],"Herb Of Viridis":["e","Найти и использовать зелёную траву"],
+"Lost In Translation":["e","Превратить предмет в Рифте"],"Interconnected":["e","Сохранить предмет в Рифте"],
+"Quick Purchase":["e","Archives: купить Shakelight в автомате"],"Unpatched Dupe Glitch":["e","Archives: скопировать предмет на принтере"],
+"Feed the Fih":["e","Archives: покормить рыбку в аквариуме"],
+"Ten Of Many":["m","Умереть 10 раз"],"You Can Run":["m","Успешно убежать от Seek"],"Sshh!":["m","Выбраться из Библиотеки"],
+"Whoever Smelt It":["m","Пережить утечку Firedamp (Шахты)"],"Shock Hazard":["m","Пережить Currents"],"Bubble Popping":["m","Лопнуть Stem броском"],
+"Unbound":["m","Использовать Крест против Ambush"],"Take A Breather":["m","Использовать Крест против Seek"],
+"Expert Technician":["h","Пройти головоломку с щитком меньше чем за минуту"],"Betrayal":["h","Забрать укрытие у игрока прямо перед его смертью"],
+"It's Not My Time":["h","Использовать Крест против Dread"],"Trespassing":["h","Сбежать из Гнезда (Nest)"],"Down The Drain":["h","Победить Seek в Плотине"],
+"Firewall":["h","Archives: откупиться от Ransom"],"You win!":["h","BATTLE: занять 1 место в раунде"],"A Triple":["h","BATTLE: устранить 3 игроков"],
+"That's a good point!":["h","BATTLE: набрать 2500 очков за раунд"],"High Roller":["h","BATTLE: набрать 5000 очков за раунд"]};
+const DIF = {e:"Лёгкая", m:"Средняя", h:"Сложная"};
 let me = null, profiles = {}, tab = "requests", rf = "new", timer = null, lastNew = null;
 
 async function loadMe() {
@@ -210,6 +236,10 @@ function picker(items, max = 5) {
   const ul = h("div", {class:"pk-list", role:"listbox"});
   const panel = h("div", {class:"pk-panel"}, q, ul); panel.hidden = true;
   const tags = h("div");
+  let df = "";
+  const chips = h("div", {class:"fchips"}, [["", "Все"], ["e", "Лёгкие"], ["m", "Средние"], ["h", "Сложные"]].map(([k, l]) => {
+    const b = h("button", {type:"button", class:k === df ? "on" : "", onclick:() => { df = k; [...chips.children].forEach(x => x.classList.toggle("on", x === b)); draw(); }}, l); return b; }));
+  panel.insertBefore(chips, ul);
   const el = h("div", {class:"pk"}, btn, panel, tags);
   const refresh = () => {
     btn.textContent = sel.length ? `Выбрано: ${sel.length} из ${max}` : "Выбери достижения";
@@ -222,8 +252,8 @@ function picker(items, max = 5) {
     refresh();
   };
   const draw = () => {
-    const s = q.value.trim().toLowerCase(), m = items.filter(n => n.toLowerCase().includes(s));
-    ul.replaceChildren(...(m.length ? m.map(n => h("div", {class:"pk-i" + (sel.includes(n) ? " on" : ""), role:"option", tabindex:"0", onclick:() => toggle(n), onkeydown:e => { if (e.key === "Enter") toggle(n); }}, (sel.includes(n) ? "✓ " : "") + n))
+    const s = q.value.trim().toLowerCase(), m = items.filter(n => (!df || CAT[n]?.[0] === df) && (n.toLowerCase().includes(s) || (CAT[n]?.[1] || "").toLowerCase().includes(s)));
+    ul.replaceChildren(...(m.length ? m.map(n => h("div", {class:"pk-i" + (sel.includes(n) ? " on" : ""), role:"option", tabindex:"0", onclick:() => toggle(n), onkeydown:e => { if (e.key === "Enter") toggle(n); }}, h("div", {class:"t"}, h("span", {}, (sel.includes(n) ? "✓ " : "") + n), CAT[n] ? h("span", {class:"dif " + CAT[n][0]}, DIF[CAT[n][0]]) : null), CAT[n] ? h("small", {}, CAT[n][1]) : null))
       : [h("div", {class:"pk-i empty"}, items.length ? "Ничего не найдено" : "Список достижений пока пуст")]));
   };
   btn.onclick = () => { panel.hidden = !panel.hidden; if (!panel.hidden) { q.value = ""; draw(); q.focus(); } };
@@ -458,13 +488,20 @@ async function tabAch(box) {
     list.replaceChildren(h("h2", {}, `Список достижений (${data?.length || 0})`), ...(data || []).map(a => h("div", {class:"card closed", style:"display:flex;justify-content:space-between;align-items:center;padding:6px 14px"},
       a.name, h("button", {class:"ghost", onclick:async () => { await db.from("achievements").delete().eq("id", a.id); load(); }}, "×"))));
   };
+  const preset = h("button", {class:"ghost preset", onclick:async () => {
+    preset.disabled = true;
+    const { error } = await db.from("achievements").upsert(Object.keys(CAT).map(name => ({name})), {onConflict:"name", ignoreDuplicates:true});
+    preset.disabled = false;
+    if (error) return toast("Не удалось загрузить список.", 1);
+    toast(`Готовый список загружен: ${Object.keys(CAT).length}`); load();
+  }}, `Загрузить готовый список (${Object.keys(CAT).length})`);
   box.append(h("div", {class:"door"}, fld("Добавить достижения", ta), h("button", {class:"go", onclick:async () => {
     const rows = [...new Set(ta.value.split("\n").map(s => s.trim()).filter(Boolean))].map(name => ({name}));
     if (!rows.length) return;
     const { error } = await db.from("achievements").upsert(rows, {onConflict:"name", ignoreDuplicates:true});
     if (error) return toast("Не удалось добавить.", 1);
     ta.value = ""; toast("Добавлено."); load();
-  }}, "Добавить")), list);
+  }}, "Добавить"), h("div", {}, preset)), list);
   load();
 }
 
