@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DorsoTic — помощь с ачивками DOORS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#1c1412;--panel:#2a1d19;--line:#4a342b;--text:#efe3d0;--mute:#a8927c;--brass:#c9a24b;--ok:#8fb573;--wait:#d98b5f;--r:6px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 Georgia,"Times New Roman",serif;min-height:100vh;display:flex;flex-direction:column}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--line)}
+.logo{font-size:1.6rem;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:color .2s}
+.logo:hover{color:var(--brass)}
+nav{display:flex;gap:8px;flex-wrap:wrap}
+main{flex:1;width:100%;max-width:760px;margin:0 auto;padding:32px 18px 40px}
+h1{font-size:2.2rem;line-height:1.1;margin:0 0 8px}
+h2{font-size:1.3rem;margin:34px 0 12px}
+.sub{color:var(--mute);margin:0 0 28px}
+.view{animation:rise .35s ease-out}
+.door{background:var(--panel);border:2px solid var(--line);border-radius:var(--r) var(--r) 0 0;padding:22px;position:relative}
+.door::after{content:"";position:absolute;right:16px;top:50%;width:10px;height:10px;border-radius:50%;background:var(--brass);animation:glow 3s ease-in-out infinite}
+label{display:block;margin:12px 0 0;font-size:.92rem;color:var(--mute)}
+input,textarea,select{display:block;width:100%;margin-top:4px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;font:inherit;transition:border-color .2s,box-shadow .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--brass);box-shadow:0 0 0 3px rgba(201,162,75,.2);outline:none}
+textarea{min-height:84px;resize:vertical}
+.row{display:grid;grid-template-columns:140px 1fr;gap:10px}
+button{background:var(--brass);color:#241a06;border:0;border-radius:var(--r);padding:9px 16px;font:inherit;font-weight:700;cursor:pointer;transition:transform .12s,filter .2s,background .2s}
+button:hover{filter:brightness(1.1)}button:active{transform:scale(.95)}
+button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+button:disabled{opacity:.5;cursor:wait}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+button.ghost:hover{border-color:var(--brass);background:rgba(201,162,75,.08)}
+button.bad{background:#a5473a;color:#fff}
+.go{margin-top:18px}
+.hp{position:absolute;left:-9999px;width:1px}
+.msg{margin-top:10px;min-height:1.4em}.err{color:var(--wait)}.good{color:var(--ok)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.tabs button{background:transparent;color:var(--mute);border:1px solid var(--line)}
+.tabs button.on{background:var(--brass);color:#241a06;border-color:var(--brass)}
+.card{background:var(--panel);border-left:3px solid var(--line);padding:12px 14px;margin:0 0 12px;animation:rise .35s ease-out both;animation-delay:calc(var(--i,0)*45ms);transition:opacity .25s,transform .25s}
+.card.new{border-color:var(--wait)}.card.in_progress{border-color:var(--brass)}.card.closed{border-color:var(--ok)}
+.card.in_progress .st{animation:pulse 1.6s ease-in-out infinite}
+.card.out{opacity:0;transform:translateX(30px)}
+.card b{display:block;font-size:1.05rem}
+.meta{color:var(--mute);font-size:.88rem}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.stat span{display:block;font-size:2rem;font-weight:700;color:var(--brass)}
+.stars{font-size:1.2rem;letter-spacing:3px;background:linear-gradient(90deg,var(--brass) var(--v,0%),var(--line) var(--v,0%));-webkit-background-clip:text;background-clip:text;color:transparent}
+.pick{display:flex;gap:2px;margin-top:6px}
+.pick button{background:none;color:var(--line);font-size:1.7rem;padding:0 3px;transition:color .15s,transform .15s}
+.pick button.on{color:var(--brass);transform:scale(1.18)}
+.empty{color:var(--mute)}
+footer{border-top:1px solid var(--line);padding:18px;text-align:center;color:var(--mute)}
+footer .stars{font-size:1.5rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--brass);padding:10px 18px;border-radius:var(--r);animation:rise .3s ease-out;z-index:9}
+.toast.bad{border-color:var(--wait)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes glow{50%{box-shadow:0 0 12px 3px rgba(201,162,75,.55)}}
+@keyframes pulse{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:520px){.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="logo" id="logo">DorsoTic</div><nav id="nav"></nav></header>
+<main id="app"></main>
+<footer id="foot"></footer>
+
+<script>
+// Вставь данные из Supabase: Project Settings → API
+const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+const SUPABASE_KEY = "YOUR-ANON-PUBLIC-KEY";
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Владелец"};
+const ST = {new:"Новая", in_progress:"Выполняется", closed:"Закрыта"};
+const PL = {discord:"Discord", telegram:"Telegram"};
+const fmt = d => new Date(d).toLocaleString("ru-RU", {dateStyle:"short", timeStyle:"short"});
+const h = (t, p = {}, ...k) => {
+  const e = document.createElement(t);
+  for (const [a, v] of Object.entries(p)) { if (a === "class") e.className = v; else if (a.startsWith("on")) e[a] = v; else e.setAttribute(a, v); }
+  e.append(...k.flat().filter(x => x != null && x !== false));
+  return e;
+};
+const fld = (label, el) => h("label", {}, label, el);
+const stars = v => h("span", {class:"stars", style:`--v:${(v || 0) / 5 * 100}%`}, "★★★★★");
+function toast(text, bad) { const t = h("div", {class:"toast" + (bad ? " bad" : "")}, text); document.body.append(t); setTimeout(() => t.remove(), 3200); }
+function count(el, n) {
+  if (matchMedia("(prefers-reduced-motion:reduce)").matches) { el.textContent = n; return; }
+  let t0; const step = t => { t0 ??= t; const p = Math.min((t - t0) / 700, 1); el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+const toks = () => { try { return JSON.parse(localStorage.getItem("tk") || "[]"); } catch { return []; } };
+const saveToks = a => { try { localStorage.setItem("tk", JSON.stringify(a.slice(-5))); } catch {} };
+
+let me = null, profiles = {}, tab = "requests", rf = "new";
+
+async function loadMe() {
+  const { data: { user } } = await db.auth.getUser();
+  me = null; if (!user) return;
+  const { data } = await db.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  if (!data) { await db.auth.signOut(); return; }
+  me = data;
+  const r = await db.from("profiles").select("id,nickname,role");
+  profiles = Object.fromEntries((r.data || []).map(p => [p.id, p]));
+}
+function drawNav() {
+  $("nav").replaceChildren(
+    me ? h("button", {class:"ghost", onclick:() => go("staff")}, `${me.nickname} · ${ROLE[me.role]}`) : null,
+    me ? h("button", {class:"ghost", onclick:async () => { await db.auth.signOut(); me = null; drawNav(); go("home"); }}, "Выйти")
+       : h("button", {class:"ghost", onclick:() => go("login")}, "Вход для персонала"));
+}
+async function drawFoot() {
+  const { data } = await db.rpc("service_rating");
+  $("foot").replaceChildren(
+    h("div", {}, "Оценка сервиса"),
+    data?.avg ? h("div", {}, stars(data.avg), ` ${data.avg} из 5 · отзывов: ${data.count}`) : h("div", {}, "Пока нет отзывов"));
+}
+async function go(v) {
+  const box = h("div", {class:"view"});
+  $("app").replaceChildren(box);
+  if (v === "home") await home(box); else if (v === "login") login(box); else await staffView(box);
+}
+
+/* ---------- Главная ---------- */
+async function home(box) {
+  const { data: list } = await db.from("achievements").select("name").order("name");
+  const names = new Set((list || []).map(a => a.name));
+  const nick = h("input", {maxlength:40, placeholder:"Ник в Roblox"});
+  const ac = h("input", {list:"achs", maxlength:100, placeholder:"Начни вводить название"});
+  const plat = h("select", {}, h("option", {value:"discord"}, "Discord"), h("option", {value:"telegram"}, "Telegram"));
+  const un = h("input", {maxlength:40, placeholder:"@username"});
+  const note = h("textarea", {maxlength:300});
+  const site = h("input", {class:"hp", tabindex:"-1", autocomplete:"off", "aria-hidden":"true"});
+  const msg = h("div", {class:"msg", role:"status"});
+  const mine = h("div");
+  const btn = h("button", {class:"go"}, "Отправить заявку");
+  btn.onclick = async () => {
+    msg.className = "msg err";
+    if (site.value) return;
+    const u = un.value.trim().replace(/^@/, "");
+    if (!nick.value.trim() || !names.has(ac.value.trim())) { msg.textContent = "Укажи ник и выбери достижение из списка."; return; }
+    if (!/^[A-Za-z0-9_.]{2,32}$/.test(u)) { msg.textContent = "Юзернейм: буквы, цифры, _ и точка, например @DorsoNews."; return; }
+    if (Date.now() - (+localStorage.getItem("last") || 0) < 60000) { msg.textContent = "Подожди минуту перед следующей заявкой."; return; }
+    btn.disabled = true;
+    const token = crypto.randomUUID();
+    const { error } = await db.from("requests").insert({token, nickname:nick.value.trim(), achievement:ac.value.trim(), platform:plat.value, username:"@" + u, note:note.value.trim() || null});
+    btn.disabled = false;
+    if (error) { msg.textContent = "Не получилось отправить. Попробуй позже."; return; }
+    saveToks([...toks(), token]);
+    try { localStorage.setItem("last", Date.now()); } catch {}
+    [nick, ac, un, note].forEach(i => i.value = "");
+    msg.className = "msg good"; msg.textContent = "Заявка отправлена. С тобой свяжутся в выбранном мессенджере.";
+    drawMine(mine);
+  };
+  box.append(h("h1", {}, "DorsoTic"), h("p", {class:"sub"}, "Помощь с достижениями в DOORS. Оставь заявку, и с тобой свяжется помощник."),
+    h("div", {class:"door"}, h("datalist", {id:"achs"}, (list || []).map(a => h("option", {value:a.name}))),
+      fld("Ник в Roblox", nick), fld("Какое достижение нужно", ac),
+      h("div", {class:"row"}, fld("Где связаться", plat), fld("Юзернейм", un)),
+      fld("Комментарий (по желанию)", note), site, btn, msg), mine);
+  drawMine(mine);
+}
+async function drawMine(box) {
+  const items = [];
+  for (const t of toks()) {
+    const { data } = await db.rpc("request_status", {p_token:t});
+    const s = data?.[0]; if (!s) continue;
+    const c = h("div", {class:"card " + s.status}, h("b", {}, s.achievement), h("div", {class:"meta st"}, ST[s.status] + (s.staff ? ` · помощник: ${s.staff}` : "")));
+    if (s.status === "closed") {
+      if (s.reviewed) c.append(h("div", {class:"meta"}, "Спасибо за отзыв!"));
+      else {
+        const pick = h("div", {class:"pick"}), bs = [];
+        for (let i = 1; i <= 5; i++) {
+          const b = h("button", {title:i + " из 5", onmouseover:() => bs.forEach((x, j) => x.classList.toggle("on", j < i)), onclick:async () => {
+            const { error } = await db.rpc("submit_review", {p_token:t, p_stars:i});
+            if (error) return toast(error.message, 1);
+            toast("Спасибо за оценку!"); drawMine(box); drawFoot();
+          }}, "★");
+          bs.push(b); pick.append(b);
+        }
+        pick.onmouseleave = () => bs.forEach(x => x.classList.remove("on"));
+        c.append(h("div", {class:"meta"}, "Оцени помощь:"), pick);
+      }
+    }
+    items.push(c);
+  }
+  box.replaceChildren(...(items.length ? [h("h2", {}, "Мои заявки"), ...items] : []));
+}
+
+/* ---------- Вход ---------- */
+function login(box) {
+  const n = h("input", {autocomplete:"username"}), p = h("input", {type:"password", autocomplete:"current-password"});
+  const msg = h("div", {class:"msg err"});
+  const submit = async () => {
+    msg.textContent = "";
+    const { error } = await db.auth.signInWithPassword({email:n.value.trim().toLowerCase() + "@dorsotic.app", password:p.value});
+    if (error) { msg.textContent = "Неверный ник или пароль."; return; }
+    await loadMe();
+    if (!me) { msg.textContent = "У этого аккаунта нет доступа."; return; }
+    drawNav(); go("staff");
+  };
+  p.onkeydown = e => { if (e.key === "Enter") submit(); };
+  box.append(h("h1", {}, "Вход для персонала"), h("p", {class:"sub"}, "Хочешь стать модератором или админом? Напиши владельцу в Telegram."),
+    h("div", {class:"door"}, fld("Ник", n), fld("Пароль", p), h("button", {class:"go", onclick:submit}, "Войти"), msg));
+}
+
+/* ---------- Панель персонала ---------- */
+async function staffView(box) {
+  if (!me) return go("login");
+  const T = [["requests", "Заявки", tabRequests], ["profile", "Профиль", tabProfile]];
+  if (me.role === "owner") T.push(["staff", "Персонал", tabStaff], ["log", "Журнал", tabLog], ["ach", "Ачивки", tabAch]);
+  const pane = h("div");
+  const draw = async () => { const p = h("div", {class:"view"}); pane.replaceChildren(p); await T.find(t => t[0] === tab)[2](p); };
+  const tabs = h("div", {class:"tabs"}, T.map(([k, l]) => h("button", {class:k === tab ? "on" : "", onclick:e => {
+    tab = k; [...tabs.children].forEach(b => b.classList.remove("on")); e.target.classList.add("on"); draw();
+  }}, l)));
+  box.append(tabs, pane);
+  await draw();
+}
+async function tabRequests(box) {
+  const { data, error } = await db.from("requests").select("*").order("created_at", {ascending:false}).limit(200);
+  if (error) return box.append(h("p", {class:"err"}, "Не удалось загрузить заявки."));
+  const list = h("div");
+  const chips = h("div", {class:"tabs"}, Object.entries(ST).map(([k, l]) => h("button", {class:k === rf ? "on" : "", onclick:e => {
+    rf = k; [...chips.children].forEach(b => b.classList.remove("on")); e.target.classList.add("on"); fill();
+  }}, `${l} (${data.filter(r => r.status === k).length})`)));
+  const act = async (fn, id, card) => {
+    const { error } = await db.rpc(fn, {p_id:id});
+    if (error) return toast(error.message, 1);
+    if (fn === "delete_request") { card.classList.add("out"); await sleep(260); }
+    go("staff");
+  };
+  const fill = () => {
+    const rows = data.filter(r => r.status === rf);
+    list.replaceChildren(...(rows.length ? rows.map((r, i) => {
+      const c = h("div", {class:"card " + r.status, style:`--i:${Math.min(i, 12)}`},
+        h("b", {}, r.achievement),
+        h("div", {}, `${r.nickname} · ${PL[r.platform]} ${r.username}`),
+        r.note ? h("div", {}, r.note) : null,
+        h("div", {class:"meta st"}, `${ST[r.status]}${r.taken_by && profiles[r.taken_by] ? " · " + profiles[r.taken_by].nickname : ""} · ${fmt(r.created_at)}`));
+      const a = h("div", {class:"acts"});
+      if (r.status === "new") a.append(h("button", {onclick:() => act("start_request", r.id, c)}, "Начать работу"));
+      if (r.status === "in_progress" && (r.taken_by === me.id || me.role !== "moderator")) a.append(h("button", {onclick:() => act("close_request", r.id, c)}, "Закрыть заявку"));
+      a.append(h("button", {class:"bad", onclick:() => confirm("Удалить заявку?") && act("delete_request", r.id, c)}, "Удалить"));
+      c.append(a); return c;
+    }) : [h("p", {class:"empty"}, "Здесь пока пусто.")]));
+  };
+  box.append(chips, list); fill();
+}
+async function tabProfile(box) {
+  let uid = me.id;
+  const out = h("div");
+  const draw = async () => {
+    const [{ data: s }, { data: rv }] = await Promise.all([db.rpc("staff_stats", {p_uid:uid}), db.from("reviews").select("stars,created_at").eq("staff_id", uid).order("created_at", {ascending:false}).limit(10)]);
+    const cells = [["Сегодня", s.day], ["Неделя", s.week], ["Месяц", s.month], ["Всё время", s.total]].map(([l, n]) => { const sp = h("span", {}, "0"); count(sp, n); return h("div", {class:"stat"}, sp, l); });
+    out.replaceChildren(h("h2", {}, "Аналитика: закрытых заявок"), h("div", {class:"stats"}, cells),
+      h("h2", {}, "Отзывы"), s.avg ? h("div", {}, stars(s.avg), ` ${s.avg} из 5 · всего: ${s.reviews}`) : h("p", {class:"empty"}, "Отзывов пока нет."),
+      ...(rv || []).map(r => h("div", {class:"card closed"}, stars(r.stars), h("div", {class:"meta"}, fmt(r.created_at)))));
+  };
+  if (me.role === "owner") {
+    const sel = h("select", {onchange:e => { uid = e.target.value; draw(); }}, Object.values(profiles).map(p => h("option", {value:p.id}, `${p.nickname} · ${ROLE[p.role]}`)));
+    sel.value = me.id; box.append(fld("Сотрудник", sel));
+  }
+  box.append(out); await draw();
+}
+async function tabStaff(box) {
+  const n = h("input", {placeholder:"ник: a-z, 0-9, _"}), p = h("input", {placeholder:"пароль от 8 символов"});
+  const r = h("select", {}, h("option", {value:"moderator"}, "Модератор"), h("option", {value:"admin"}, "Админ"));
+  const msg = h("div", {class:"msg"});
+  const b = h("button", {class:"go", onclick:async () => {
+    b.disabled = true; msg.className = "msg err"; msg.textContent = "";
+    const { error } = await db.functions.invoke("create-staff", {body:{nickname:n.value.trim().toLowerCase(), password:p.value, role:r.value}});
+    b.disabled = false;
+    if (error) { let t = "Не удалось создать аккаунт."; try { t = (await error.context.json()).error || t; } catch {} msg.textContent = t; return; }
+    toast("Аккаунт создан. Передай ник и пароль сотруднику."); await loadMe(); go("staff");
+  }}, "Создать аккаунт");
+  box.append(h("div", {class:"door"}, fld("Ник", n), fld("Пароль", p), fld("Роль", r), b, msg), h("h2", {}, "Команда"),
+    ...Object.values(profiles).map((x, i) => h("div", {class:"card closed", style:`--i:${i}`}, h("b", {}, x.nickname), h("div", {class:"meta"}, ROLE[x.role]))));
+}
+async function tabLog(box) {
+  const { data } = await db.from("action_log").select("*").order("created_at", {ascending:false}).limit(200);
+  const L = {start:"начал(а) работу", close:"закрыл(а)", delete:"удалил(а)"};
+  const C = {start:"in_progress", close:"closed", delete:"new"};
+  box.append(...(data?.length ? data.map((x, i) => h("div", {class:"card " + C[x.action], style:`--i:${Math.min(i, 12)}`},
+    h("b", {}, `${profiles[x.staff_id]?.nickname || "удалённый аккаунт"} ${L[x.action]}`), h("div", {}, x.summary), h("div", {class:"meta"}, fmt(x.created_at)))) : [h("p", {class:"empty"}, "Журнал пуст.")]));
+}
+async function tabAch(box) {
+  const ta = h("textarea", {placeholder:"По одному достижению в строке", style:"min-height:140px"});
+  const list = h("div");
+  const load = async () => {
+    const { data } = await db.from("achievements").select("*").order("name");
+    list.replaceChildren(h("h2", {}, `Список достижений (${data?.length || 0})`), ...(data || []).map(a => h("div", {class:"card closed", style:"display:flex;justify-content:space-between;align-items:center;padding:6px 14px"},
+      a.name, h("button", {class:"ghost", onclick:async () => { await db.from("achievements").delete().eq("id", a.id); load(); }}, "×"))));
+  };
+  box.append(h("div", {class:"door"}, fld("Добавить достижения", ta), h("button", {class:"go", onclick:async () => {
+    const rows = [...new Set(ta.value.split("\n").map(s => s.trim()).filter(Boolean))].map(name => ({name}));
+    if (!rows.length) return;
+    const { error } = await db.from("achievements").upsert(rows, {onConflict:"name", ignoreDuplicates:true});
+    if (error) return toast("Не удалось добавить.", 1);
+    ta.value = ""; toast("Добавлено."); load();
+  }}, "Добавить")), list);
+  load();
+}
+
+$("logo").onclick = () => go("home");
+(async () => { await loadMe(); drawNav(); drawFoot(); go(me ? "staff" : "home"); })();
+</script>
+</body>
+</html>
