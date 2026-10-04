@@ -108,10 +108,34 @@ h1{font-size:clamp(2.2rem,8vw,3.2rem)}
 @media (max-width:380px){.row{grid-template-columns:1fr}h2{font-size:1.35rem}.logo{font-size:1.5rem}.go{width:100%}}
 @media (min-width:1400px){body{font-size:17px}main.wide{max-width:1200px}}
 @media (max-height:480px) and (orientation:landscape){header{position:static}.tabs.top{top:0}}
+.tag{display:inline-flex;gap:4px;align-items:center;background:rgba(212,172,85,.14);border:1px solid var(--brass);border-radius:99px;padding:2px 4px 2px 12px;font-size:.88rem;margin:8px 6px 0 0}
+.tag button{min-height:0!important;padding:0 8px;border:0;font-size:1.15rem;line-height:1.4}
+.gift{display:inline-block;padding:2px 10px;border-radius:99px;background:rgba(143,181,115,.16);color:var(--ok);border:1px solid var(--ok);font-size:.84rem;margin-top:6px}
+.rate{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid var(--line);border-radius:99px;font-size:.88rem;color:var(--mute)}
+.rate .stars{font-size:1rem;letter-spacing:1px}
+.rv textarea{min-height:60px;margin-top:8px}
+.tr{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;animation:rise .25s ease-out}
+.tr select{margin:0;flex:1 1 150px}
+.still .card{animation:none}
+.flow{position:relative;padding-left:58px;margin:10px 0 0}
+.flow .line{position:absolute;left:19px;top:0;width:2px;height:100%;background:linear-gradient(var(--brass),transparent);transform:scaleY(0);transform-origin:top;transition:transform 1.8s ease-out}
+.flow.in .line{transform:scaleY(1)}
+.step{position:relative;opacity:0;transform:translateX(-18px);transition:opacity .6s,transform .6s;transition-delay:calc(var(--i)*.28s)}
+.flow.in .step{opacity:1;transform:none}
+.step .card{animation:none}
+.step .n{position:absolute;left:-58px;top:6px;width:40px;height:40px;border-radius:50%;background:var(--panel2);border:2px solid var(--brass);display:grid;place-items:center;font-family:var(--f);font-size:1.3rem;color:var(--brass);transform:scale(0);transition:transform .5s cubic-bezier(.3,1.6,.5,1);transition-delay:calc(var(--i)*.28s + .15s)}
+.flow.in .step .n{transform:scale(1)}
+details{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;margin:0 0 10px;transition:border-color .2s}
+details[open]{border-color:var(--brass)}
+summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--brass);font-size:1.3rem;line-height:1;transition:transform .3s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{margin:10px 0 0;color:var(--mute);animation:rise .3s ease-out}
 </style>
 </head>
 <body>
-<header><div class="logo" id="logo">DorsoTic</div><nav id="nav"></nav></header>
+<header><div class="logo" id="logo">DorsoTic</div><div class="rate" id="rate"></div><nav id="nav"></nav></header>
 <main id="app"></main>
 <footer id="foot"></footer>
 
@@ -144,7 +168,7 @@ function count(el, n) {
 const toks = () => { try { return JSON.parse(localStorage.getItem("tk") || "[]"); } catch { return []; } };
 const saveToks = a => { try { localStorage.setItem("tk", JSON.stringify(a.slice(-5))); } catch {} };
 
-let me = null, profiles = {}, tab = "requests", rf = "new";
+let me = null, profiles = {}, tab = "requests", rf = "new", timer = null, lastNew = null;
 
 async function loadMe() {
   const { data: { user } } = await db.auth.getUser();
@@ -156,13 +180,15 @@ async function loadMe() {
   profiles = Object.fromEntries((r.data || []).map(p => [p.id, p]));
 }
 function drawNav() {
-  $("nav").replaceChildren(...(me ? [
+  $("nav").replaceChildren(h("button", {class:"ghost", onclick:() => go("how")}, "Как это работает"), ...(me ? [
     h("button", {class:"ghost", onclick:() => go("staff")}, `${me.nickname} · ${ROLE[me.role]}`),
     h("button", {class:"ghost", onclick:async () => { await db.auth.signOut(); me = null; drawNav(); go("home"); }}, "Выйти")
   ] : [h("button", {class:"ghost", onclick:() => go("login")}, "Вход для персонала")]));
 }
 async function drawFoot() {
   const { data } = await db.rpc("service_rating");
+  $("rate").replaceChildren(...(data?.avg ? [h("span", {}, "Сервис"), stars(data.avg), ` ${data.avg}`] : ["Сервис: нет оценок"]));
+  $("rate").title = "Оценка сервиса";
   $("foot").replaceChildren(
     h("div", {}, "Оценка сервиса"),
     data?.avg ? h("div", {}, stars(data.avg), ` ${data.avg} из 5 · отзывов: ${data.count}`) : h("div", {}, "Пока нет отзывов"));
@@ -171,27 +197,39 @@ async function go(v) {
   const box = h("div", {class:"view"});
   $("app").className = v === "staff" ? "wide" : "";
   $("app").replaceChildren(box);
-  if (v === "home") await home(box); else if (v === "login") login(box); else await staffView(box);
+  clearInterval(timer); document.title = "DorsoTic — помощь с ачивками DOORS";
+  if (v === "staff") drawFoot();
+  if (v === "home") await home(box); else if (v === "login") login(box); else if (v === "how") how(box); else await staffView(box);
 }
 
-/* ---------- Выбор достижения с поиском ---------- */
-function picker(items) {
-  let val = "";
-  const btn = h("button", {type:"button", class:"ghost pk-btn"}, "Выбери достижение");
+/* ---------- Выбор достижений с поиском ---------- */
+function picker(items, max = 5) {
+  const sel = [];
+  const btn = h("button", {type:"button", class:"ghost pk-btn"}, "Выбери достижения");
   const q = h("input", {class:"pk-q", placeholder:"Поиск…", "aria-label":"Поиск достижения"});
   const ul = h("div", {class:"pk-list", role:"listbox"});
   const panel = h("div", {class:"pk-panel"}, q, ul); panel.hidden = true;
-  const el = h("div", {class:"pk"}, btn, panel);
-  const pick = n => { val = n; btn.textContent = n || "Выбери достижение"; panel.hidden = true; };
+  const tags = h("div");
+  const el = h("div", {class:"pk"}, btn, panel, tags);
+  const refresh = () => {
+    btn.textContent = sel.length ? `Выбрано: ${sel.length} из ${max}` : "Выбери достижения";
+    tags.replaceChildren(...sel.map(n => h("span", {class:"tag"}, n, h("button", {type:"button", class:"ghost", "aria-label":"Убрать", onclick:() => toggle(n)}, "×"))));
+    draw();
+  };
+  const toggle = n => {
+    const i = sel.indexOf(n);
+    if (i >= 0) sel.splice(i, 1); else if (sel.length < max) sel.push(n); else return toast(`Не больше ${max} достижений в одной заявке`, 1);
+    refresh();
+  };
   const draw = () => {
     const s = q.value.trim().toLowerCase(), m = items.filter(n => n.toLowerCase().includes(s));
-    ul.replaceChildren(...(m.length ? m.map(n => h("div", {class:"pk-i" + (n === val ? " on" : ""), role:"option", tabindex:"0", onclick:() => pick(n), onkeydown:e => { if (e.key === "Enter") pick(n); }}, n))
+    ul.replaceChildren(...(m.length ? m.map(n => h("div", {class:"pk-i" + (sel.includes(n) ? " on" : ""), role:"option", tabindex:"0", onclick:() => toggle(n), onkeydown:e => { if (e.key === "Enter") toggle(n); }}, (sel.includes(n) ? "✓ " : "") + n))
       : [h("div", {class:"pk-i empty"}, items.length ? "Ничего не найдено" : "Список достижений пока пуст")]));
   };
   btn.onclick = () => { panel.hidden = !panel.hidden; if (!panel.hidden) { q.value = ""; draw(); q.focus(); } };
   q.oninput = draw;
   document.addEventListener("click", e => { if (!el.contains(e.target)) panel.hidden = true; });
-  return {el, get:() => val, set:pick};
+  return {el, get:() => [...sel], clear:() => { sel.length = 0; refresh(); }};
 }
 
 /* ---------- Главная ---------- */
@@ -203,6 +241,7 @@ async function home(box) {
   const plat = h("select", {}, h("option", {value:"discord"}, "Discord"), h("option", {value:"telegram"}, "Telegram"));
   const un = h("input", {maxlength:40, placeholder:"@username"});
   const note = h("textarea", {maxlength:300});
+  const reward = h("input", {maxlength:100, placeholder:"Например: предмет, ключ, золото"});
   const site = h("input", {class:"hp", tabindex:"-1", autocomplete:"off", "aria-hidden":"true"});
   const msg = h("div", {class:"msg", role:"status"});
   const mine = h("div");
@@ -211,52 +250,87 @@ async function home(box) {
     msg.className = "msg err";
     if (site.value) return;
     const u = un.value.trim().replace(/^@/, "");
-    if (!nick.value.trim() || !names.has(pk.get())) { msg.textContent = "Укажи ник и выбери достижение из списка."; return; }
+    const chosen = pk.get();
+    if (!nick.value.trim() || !chosen.length || !chosen.every(n => names.has(n))) { msg.textContent = "Укажи ник и выбери хотя бы одно достижение."; return; }
     if (!/^[A-Za-z0-9_.]{2,32}$/.test(u)) { msg.textContent = "Юзернейм: буквы, цифры, _ и точка, например @DorsoNews."; return; }
     if (Date.now() - (+localStorage.getItem("last") || 0) < 60000) { msg.textContent = "Подожди минуту перед следующей заявкой."; return; }
     btn.disabled = true;
     const token = crypto.randomUUID();
-    const { error } = await db.from("requests").insert({token, nickname:nick.value.trim(), achievement:pk.get(), platform:plat.value, username:"@" + u, note:note.value.trim() || null});
+    const { error } = await db.from("requests").insert({token, nickname:nick.value.trim(), achievement:chosen.join("; "), reward:reward.value.trim() || null, platform:plat.value, username:"@" + u, note:note.value.trim() || null});
     btn.disabled = false;
     if (error) { msg.textContent = "Не получилось отправить. Попробуй позже."; return; }
     saveToks([...toks(), token]);
     try { localStorage.setItem("last", Date.now()); } catch {}
-    [nick, un, note].forEach(i => i.value = ""); pk.set("");
+    [nick, un, note, reward].forEach(i => i.value = ""); pk.clear();
     msg.className = "msg good"; msg.textContent = "Заявка отправлена. С тобой свяжутся в выбранном мессенджере.";
     drawMine(mine);
   };
-  box.append(h("h1", {}, "DorsoTic"), h("p", {class:"sub"}, "Помощь с достижениями в DOORS. Оставь заявку, и с тобой свяжется помощник."),
+  const pubStats = h("div", {class:"stats", style:"margin-bottom:26px"});
+  db.rpc("public_stats").then(({ data: d }) => {
+    if (!d) return;
+    const num = (l, n) => { const sp = h("span", {}, "0"); count(sp, n); return h("div", {class:"stat"}, sp, l); };
+    pubStats.replaceChildren(num("Заявок выполнено", d.closed), num("Сейчас в работе", d.open), num("Помощников", d.staff),
+      h("div", {class:"stat"}, h("span", {}, d.avg ? String(d.avg) : "—"), d.reviews ? `Оценка сервиса, отзывов: ${d.reviews}` : "Оценка сервиса"));
+  });
+  box.append(h("h1", {}, "DorsoTic"), h("p", {class:"sub"}, "Помощь с достижениями в DOORS. Оставь заявку, и с тобой свяжется помощник."), pubStats,
     h("div", {class:"door"},
-      fld("Ник в Roblox", nick), h("div", {class:"lbl"}, "Какое достижение нужно", pk.el),
+      fld("Ник в Roblox", nick), h("div", {class:"lbl"}, "Какие достижения нужны (до 5)", pk.el),
+      fld("Награда за помощь (по желанию). С наградой заявку берут быстрее", reward),
       h("div", {class:"row"}, fld("Где связаться", plat), fld("Юзернейм", un)),
       fld("Комментарий (по желанию)", note), site, btn, msg), mine);
   drawMine(mine);
+}
+function reviewForm(t, done) {
+  let v = 0; const bs = [], pick = h("div", {class:"pick"});
+  const paint = n => bs.forEach((x, j) => x.classList.toggle("on", j < n));
+  for (let i = 1; i <= 5; i++) { const b = h("button", {type:"button", title:i + " из 5", onmouseover:() => paint(i), onclick:() => { v = i; paint(i); }}, "★"); bs.push(b); pick.append(b); }
+  pick.onmouseleave = () => paint(v);
+  const cm = h("textarea", {maxlength:300, placeholder:"Комментарий (по желанию)"});
+  const send = h("button", {onclick:async () => {
+    if (!v) return toast("Выбери оценку от 1 до 5 звёзд.", 1);
+    const { error } = await db.rpc("submit_review", {p_token:t, p_stars:v, p_comment:cm.value.trim() || null});
+    if (error) return toast(error.message, 1);
+    toast("Спасибо за отзыв!"); done();
+  }}, "Отправить отзыв");
+  return h("div", {class:"rv"}, h("div", {class:"meta"}, "Оцени помощь:"), pick, cm, h("div", {class:"acts"}, send));
 }
 async function drawMine(box) {
   const items = [];
   for (const t of toks()) {
     const { data } = await db.rpc("request_status", {p_token:t});
     const s = data?.[0]; if (!s) continue;
-    const c = h("div", {class:"card " + s.status}, h("b", {}, s.achievement), h("div", {class:"meta st"}, ST[s.status] + (s.staff ? ` · помощник: ${s.staff}` : "")));
-    if (s.status === "closed") {
-      if (s.reviewed) c.append(h("div", {class:"meta"}, "Спасибо за отзыв!"));
-      else {
-        const pick = h("div", {class:"pick"}), bs = [];
-        for (let i = 1; i <= 5; i++) {
-          const b = h("button", {title:i + " из 5", onmouseover:() => bs.forEach((x, j) => x.classList.toggle("on", j < i)), onclick:async () => {
-            const { error } = await db.rpc("submit_review", {p_token:t, p_stars:i});
-            if (error) return toast(error.message, 1);
-            toast("Спасибо за оценку!"); drawMine(box); drawFoot();
-          }}, "★");
-          bs.push(b); pick.append(b);
-        }
-        pick.onmouseleave = () => bs.forEach(x => x.classList.remove("on"));
-        c.append(h("div", {class:"meta"}, "Оцени помощь:"), pick);
-      }
-    }
+    const c = h("div", {class:"card " + s.status}, h("b", {}, s.achievement.split("; ").join(" · ")),
+      h("div", {class:"meta"}, h("span", {class:"pill " + s.status}, ST[s.status]), s.staff ? ` помощник: ${s.staff}` : ""));
+    if (s.status === "new") c.append(h("div", {class:"acts"}, h("button", {class:"ghost", onclick:async () => {
+      if (!confirm("Отозвать заявку?")) return;
+      const { error } = await db.rpc("cancel_request", {p_token:t});
+      if (error) return toast(error.message, 1);
+      saveToks(toks().filter(x => x !== t)); toast("Заявка отозвана."); drawMine(box);
+    }}, "Отозвать заявку")));
+    if (s.status === "closed") c.append(s.reviewed ? h("div", {class:"meta"}, "Спасибо за отзыв!") : reviewForm(t, () => { drawMine(box); drawFoot(); }));
     items.push(c);
   }
   box.replaceChildren(...(items.length ? [h("h2", {}, "Мои заявки"), ...items] : []));
+}
+
+/* ---------- Как это работает ---------- */
+function how(box) {
+  const S = [["Выбери достижения", "Найди нужные в списке с поиском. В одной заявке можно выбрать до пяти."],
+    ["Расскажи, как связаться", "Укажи Discord или Telegram и юзернейм. По желанию добавь награду: с ней заявку берут быстрее."],
+    ["Помощник берёт заявку", "Статус меняется на «Выполняется», и помощник пишет тебе в мессенджер. Пока заявку никто не взял, её можно отозвать."],
+    ["Играете вместе", "Договоритесь о времени, зайдите в DOORS и выполните достижения."],
+    ["Оцени помощь", "Когда заявка закрыта, поставь звёзды и оставь комментарий. Из оценок складывается рейтинг сервиса."]];
+  const F = [["Нужен ли аккаунт?", "Нет. Посетителям достаточно ника в Roblox и юзернейма в Discord или Telegram."],
+    ["Просят ли пароль от Roblox?", "Никогда. Если кто-то просит пароль, не отдавай его и сообщи владельцу."],
+    ["Как отозвать заявку?", "В блоке «Мои заявки» на главной нажми «Отозвать». Это можно сделать, пока заявку не взяли в работу."],
+    ["Почему я не вижу заявку на другом устройстве?", "Статус хранится в браузере, где заявка была отправлена."]];
+  const flow = h("div", {class:"flow"}, h("div", {class:"line"}), S.map(([t, d], i) =>
+    h("div", {class:"step", style:`--i:${i}`}, h("div", {class:"n"}, String(i + 1)), h("div", {class:"card"}, h("b", {}, t), h("div", {class:"meta"}, d)))));
+  box.append(h("h1", {}, "Как это работает"), h("p", {class:"sub"}, "Пять шагов от заявки до достижения."), flow,
+    h("h2", {}, "Частые вопросы"), ...F.map(([q, a]) => h("details", {}, h("summary", {}, q), h("p", {}, a))),
+    h("div", {style:"text-align:center;margin-top:28px"}, h("button", {class:"go", onclick:() => go("home")}, "Оставить заявку")));
+  const io = new IntersectionObserver(es => { if (es[0].isIntersecting) { flow.classList.add("in"); io.disconnect(); } }, {threshold:.15});
+  io.observe(flow);
 }
 
 /* ---------- Вход ---------- */
@@ -282,7 +356,7 @@ async function staffView(box) {
   const T = [["requests", "Заявки", tabRequests], ["profile", "Профиль", tabProfile]];
   if (me.role === "owner") T.push(["staff", "Персонал", tabStaff], ["log", "Журнал", tabLog], ["ach", "Ачивки", tabAch]);
   const pane = h("div");
-  const draw = async () => { const p = h("div", {class:"view"}); pane.replaceChildren(p); await T.find(t => t[0] === tab)[2](p); };
+  const draw = async () => { clearInterval(timer); const p = h("div", {class:"view"}); pane.replaceChildren(p); await T.find(t => t[0] === tab)[2](p); };
   const tabs = h("div", {class:"tabs top"}, T.map(([k, l]) => h("button", {class:k === tab ? "on" : "", onclick:e => {
     tab = k; [...tabs.children].forEach(b => b.classList.remove("on")); e.target.classList.add("on"); draw();
   }}, l)));
@@ -290,45 +364,64 @@ async function staffView(box) {
   await draw();
 }
 async function tabRequests(box) {
-  const { data, error } = await db.from("requests").select("*").order("created_at", {ascending:false}).limit(200);
-  if (error) return box.append(h("p", {class:"err"}, "Не удалось загрузить заявки."));
-  const list = h("div", {class:"grid"});
-  const chips = h("div", {class:"tabs"}, Object.entries(ST).map(([k, l]) => h("button", {class:k === rf ? "on" : "", onclick:e => {
-    rf = k; [...chips.children].forEach(b => b.classList.remove("on")); e.target.classList.add("on"); fill();
-  }}, `${l} (${data.filter(r => r.status === k).length})`)));
-  const act = async (fn, id, card) => {
-    const { error } = await db.rpc(fn, {p_id:id});
+  const list = h("div", {class:"grid"}), chips = h("div", {class:"tabs"});
+  let data = [], first = true;
+  const btns = Object.keys(ST).map(k => { const b = h("button", {class:k === rf ? "on" : "", onclick:() => { rf = k; btns.forEach(x => x.classList.toggle("on", x === b)); first = true; fill(); }}, ST[k]); b.dataset.k = k; return b; });
+  chips.append(...btns, h("button", {class:"ghost", style:"margin-left:auto", onclick:() => load(true)}, "Обновить"));
+  const act = async (fn, args, c) => {
+    const { error } = await db.rpc(fn, args);
     if (error) return toast(error.message, 1);
-    if (fn === "delete_request") { card.classList.add("out"); await sleep(260); }
-    go("staff");
+    if (fn === "delete_request") { c.classList.add("out"); await sleep(260); }
+    load(true);
+  };
+  const transferUI = (c, r) => {
+    const old = c.querySelector(".tr"); if (old) return old.remove();
+    const sel = h("select", {}, h("option", {value:""}, "В общую очередь"), Object.values(profiles).filter(p => p.id !== me.id).map(p => h("option", {value:p.id}, `${p.nickname} (${ROLE[p.role]})`)));
+    c.append(h("div", {class:"tr"}, sel, h("button", {onclick:() => act("transfer_request", {p_id:r.id, p_to:sel.value || null}, c)}, "Передать")));
+  };
+  const card = (r, i) => {
+    const can = r.taken_by === me.id || me.role !== "moderator";
+    const c = h("div", {class:"card " + r.status, style:`--i:${Math.min(i, 12)}`},
+      h("b", {}, r.achievement.split("; ").join(" · ")),
+      h("div", {}, `${r.nickname} · ${PL[r.platform]} ${r.username}`),
+      r.reward ? h("div", {class:"gift"}, "Награда: " + r.reward) : null,
+      r.note ? h("div", {}, r.note) : null,
+      h("div", {class:"meta"}, h("span", {class:"pill " + r.status}, ST[r.status]), `${r.taken_by && profiles[r.taken_by] ? " " + profiles[r.taken_by].nickname + " ·" : ""} ${fmt(r.created_at)}`));
+    const a = h("div", {class:"acts"});
+    if (r.status === "new") a.append(h("button", {onclick:() => act("start_request", {p_id:r.id}, c)}, "Начать работу"));
+    if (r.status === "in_progress" && can) a.append(h("button", {onclick:() => act("close_request", {p_id:r.id}, c)}, "Закрыть заявку"), h("button", {class:"ghost", onclick:() => transferUI(c, r)}, "Передать"));
+    a.append(h("button", {class:"bad", onclick:() => confirm("Удалить заявку?") && act("delete_request", {p_id:r.id}, c)}, "Удалить"));
+    c.append(a); return c;
   };
   const fill = () => {
-    const rows = data.filter(r => r.status === rf);
-    list.replaceChildren(...(rows.length ? rows.map((r, i) => {
-      const c = h("div", {class:"card " + r.status, style:`--i:${Math.min(i, 12)}`},
-        h("b", {}, r.achievement),
-        h("div", {}, `${r.nickname} · ${PL[r.platform]} ${r.username}`),
-        r.note ? h("div", {}, r.note) : null,
-        h("div", {class:"meta"}, h("span", {class:"pill " + r.status}, ST[r.status]), `${r.taken_by && profiles[r.taken_by] ? " " + profiles[r.taken_by].nickname + " ·" : ""} ${fmt(r.created_at)}`));
-      const a = h("div", {class:"acts"});
-      if (r.status === "new") a.append(h("button", {onclick:() => act("start_request", r.id, c)}, "Начать работу"));
-      if (r.status === "in_progress" && (r.taken_by === me.id || me.role !== "moderator")) a.append(h("button", {onclick:() => act("close_request", r.id, c)}, "Закрыть заявку"));
-      a.append(h("button", {class:"bad", onclick:() => confirm("Удалить заявку?") && act("delete_request", r.id, c)}, "Удалить"));
-      c.append(a); return c;
-    }) : [h("p", {class:"empty"}, "Здесь пока пусто.")]));
+    btns.forEach(b => b.textContent = `${ST[b.dataset.k]} (${data.filter(r => r.status === b.dataset.k).length})`);
+    const rows = data.filter(r => r.status === rf).sort((a, b) => !!b.reward - !!a.reward);
+    list.classList.toggle("still", !first);
+    list.replaceChildren(...(rows.length ? rows.map(card) : [h("p", {class:"empty"}, "Здесь пока пусто.")]));
+    first = false;
   };
-  chips.append(h("button", {class:"ghost", style:"margin-left:auto", onclick:() => go("staff")}, "Обновить"));
-  box.append(chips, list); fill();
+  const load = async manual => {
+    if (!manual && list.querySelector(".tr")) return;
+    const { data: d, error } = await db.from("requests").select("*").order("created_at", {ascending:false}).limit(200);
+    if (error) { if (manual) toast("Не удалось загрузить заявки.", 1); return; }
+    const n = d.filter(r => r.status === "new").length;
+    if (lastNew !== null && n > lastNew) toast("Новая заявка!");
+    lastNew = n; document.title = (n ? `(${n}) ` : "") + "DorsoTic";
+    data = d; if (manual) first = true; fill();
+  };
+  box.append(chips, list);
+  await load(true);
+  timer = setInterval(() => load(), 15000);
 }
 async function tabProfile(box) {
   let uid = me.id;
   const out = h("div");
   const draw = async () => {
-    const [{ data: s }, { data: rv }] = await Promise.all([db.rpc("staff_stats", {p_uid:uid}), db.from("reviews").select("stars,created_at").eq("staff_id", uid).order("created_at", {ascending:false}).limit(10)]);
+    const [{ data: s }, { data: rv }] = await Promise.all([db.rpc("staff_stats", {p_uid:uid}), db.from("reviews").select("stars,comment,created_at").eq("staff_id", uid).order("created_at", {ascending:false}).limit(10)]);
     const cells = [["Сегодня", s.day], ["Неделя", s.week], ["Месяц", s.month], ["Всё время", s.total]].map(([l, n]) => { const sp = h("span", {}, "0"); count(sp, n); return h("div", {class:"stat"}, sp, l); });
     out.replaceChildren(h("h2", {}, "Аналитика: закрытых заявок"), h("div", {class:"stats"}, cells),
       h("h2", {}, "Отзывы"), s.avg ? h("div", {}, stars(s.avg), ` ${s.avg} из 5 · всего: ${s.reviews}`) : h("p", {class:"empty"}, "Отзывов пока нет."),
-      ...(rv || []).map(r => h("div", {class:"card closed"}, stars(r.stars), h("div", {class:"meta"}, fmt(r.created_at)))));
+      ...(rv || []).map(r => h("div", {class:"card closed"}, stars(r.stars), r.comment ? h("div", {}, r.comment) : null, h("div", {class:"meta"}, fmt(r.created_at)))));
   };
   if (me.role === "owner") {
     const sel = h("select", {onchange:e => { uid = e.target.value; draw(); }}, Object.values(profiles).map(p => h("option", {value:p.id}, `${p.nickname} · ${ROLE[p.role]}`)));
@@ -352,10 +445,10 @@ async function tabStaff(box) {
 }
 async function tabLog(box) {
   const { data } = await db.from("action_log").select("*").order("created_at", {ascending:false}).limit(200);
-  const L = {start:"начал(а) работу", close:"закрыл(а)", delete:"удалил(а)"};
-  const C = {start:"in_progress", close:"closed", delete:"new"};
+  const L = {start:"начал(а) работу", close:"закрыл(а)", delete:"удалил(а)", cancel:"отозвал(а) заявку", transfer:"передал(а) заявку"};
+  const C = {start:"in_progress", close:"closed", delete:"new", cancel:"new", transfer:"in_progress"};
   box.append(...(data?.length ? data.map((x, i) => h("div", {class:"card " + C[x.action], style:`--i:${Math.min(i, 12)}`},
-    h("b", {}, `${profiles[x.staff_id]?.nickname || "удалённый аккаунт"} ${L[x.action]}`), h("div", {}, x.summary), h("div", {class:"meta"}, fmt(x.created_at)))) : [h("p", {class:"empty"}, "Журнал пуст.")]));
+    h("b", {}, `${x.action === "cancel" ? "Посетитель" : profiles[x.staff_id]?.nickname || "удалённый аккаунт"} ${L[x.action]}`), h("div", {}, x.summary), h("div", {class:"meta"}, fmt(x.created_at)))) : [h("p", {class:"empty"}, "Журнал пуст.")]));
 }
 async function tabAch(box) {
   const ta = h("textarea", {placeholder:"По одному достижению в строке", style:"min-height:140px"});
