@@ -20,7 +20,7 @@
 }
 
 /* ВСТАВЬ СЮДА СВОЙ @font-face{font-family:"Doors";...} БЕЗ ИЗМЕНЕНИЙ */
-:root{--bg:#17100e;--panel:#251915;--panel2:#2e201a;--line:#46322a;--text:#f1e6d3;--mute:#a8927c;--brass:#d4ac55;--ok:#8fb573;--wait:#e0905f;--r:10px;--f:"Doors",Georgia,serif}
+:root{--bg:#17100e;--panel:#251915;--panel2:#2e201a;--line:#46322a;--text:#f1e6d3;--mute:#a8927c;--brass:#d4ac55;--ok:#8fb573;--wait:#e0905f;--hold:#7fa6d1;--r:10px;--f:"Doors",Georgia,serif}
 *{box-sizing:border-box}
 body{margin:0;color:var(--text);font:16px/1.55 Georgia,"Times New Roman",serif;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
  background:radial-gradient(ellipse at 50% -10%,rgba(212,172,85,.14),transparent 55%),repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 2px,transparent 2px 40px),var(--bg);background-attachment:fixed}
@@ -29,6 +29,7 @@ header{position:sticky;top:0;z-index:20;display:flex;justify-content:space-betwe
 .logo:hover{text-shadow:0 0 28px rgba(212,172,85,.8)}
 nav{display:flex;gap:8px;flex-wrap:wrap}
 nav button.cur{border-color:var(--brass);color:var(--brass)}
+.ic{display:none}
 main{flex:1;width:100%;max-width:760px;margin:0 auto;padding:36px 18px 48px;transition:max-width .3s}
 main.wide{max-width:1000px}
 h1,h2,.logo,.go,.tabs button,footer div:first-child,.step .n,.stat span{font-family:var(--f);font-weight:400;letter-spacing:.05em}
@@ -36,7 +37,7 @@ h1{font-size:3.2rem;line-height:1.05;margin:0 0 10px;color:var(--brass);text-sha
 h2{font-size:1.6rem;margin:36px 0 14px}
 .sub{color:var(--mute);margin:0 0 30px}
 .view>h1,.view>.sub{text-align:center}
-.view{animation:rise .4s ease-out}
+.view{animation:fade .4s ease-out}
 .door{background:linear-gradient(180deg,var(--panel2),var(--panel));border:2px solid var(--line);border-radius:16px 16px 0 0;padding:26px;position:relative;box-shadow:0 22px 50px rgba(0,0,0,.4),inset 0 0 0 6px rgba(0,0,0,.14)}
 label,.lbl{display:block;margin:14px 0 0;font-size:.92rem;color:var(--mute)}
 input,textarea,select{display:block;width:100%;margin-top:5px;background:rgba(0,0,0,.28);color:var(--text);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;font:inherit;transition:border-color .2s,box-shadow .2s}
@@ -50,6 +51,7 @@ button:disabled{opacity:.5;cursor:wait}
 button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);box-shadow:none}
 button.ghost:hover{border-color:var(--brass);background:rgba(212,172,85,.09)}
 button.bad{background:#a5473a;color:#fff}
+button.hold{background:var(--hold);color:#0f1a26}
 .go{margin-top:20px;font-family:var(--f);letter-spacing:.08em;font-size:1.15rem;font-weight:400;padding:11px 26px}
 .hp{position:absolute;left:-9999px;width:1px}
 .msg{margin-top:10px;min-height:1.4em}.err{color:var(--wait)}.good{color:var(--ok)}
@@ -62,12 +64,12 @@ button.bad{background:#a5473a;color:#fff}
 .grid .card{margin:0}
 .card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-left:4px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:0 0 12px;box-shadow:0 6px 18px rgba(0,0,0,.25);animation:rise .4s ease-out both;animation-delay:calc(var(--i,0)*45ms);transition:opacity .25s,transform .25s,border-color .2s}
 @media (hover:hover){.card:hover{border-color:var(--brass)}}
-.card.new{border-left-color:var(--wait)}.card.in_progress{border-left-color:var(--brass)}.card.closed{border-left-color:var(--ok)}
+.card.new{border-left-color:var(--wait)}.card.in_progress{border-left-color:var(--brass)}.card.waiting{border-left-color:var(--hold)}.card.closed{border-left-color:var(--ok)}
 .card.out{opacity:0;transform:translateX(30px)}
 .card b{display:block;font-size:1.08rem;margin-bottom:2px}
 .meta{color:var(--mute);font-size:.88rem;margin-top:4px}
 .pill{display:inline-block;padding:1px 10px;border-radius:99px;font-size:.78rem;font-weight:700;color:#241a06;background:var(--mute)}
-.pill.new{background:var(--wait)}.pill.in_progress{background:var(--brass);animation:pulse 1.6s ease-in-out infinite}.pill.closed{background:var(--ok)}
+.pill.new{background:var(--wait)}.pill.in_progress{background:var(--brass);animation:pulse 1.6s ease-in-out infinite}.pill.waiting{background:var(--hold)}.pill.closed{background:var(--ok)}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .acts button{padding:7px 14px;font-size:.92rem}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
@@ -88,6 +90,7 @@ button.bad{background:#a5473a;color:#fff}
 .pk-i.on{color:var(--brass);font-weight:700}
 .pk-i .t{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .pk-i small{color:var(--mute);font-weight:400;font-size:.8rem}
+.pk-done{display:none;width:100%;margin-top:8px}
 .empty{color:var(--mute)}
 .fchips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
 .fchips button{padding:4px 12px;font-size:.82rem;min-height:0;background:transparent;color:var(--mute);border:1px solid var(--line);box-shadow:none;font-weight:400}
@@ -101,6 +104,7 @@ footer div:first-child{font-family:var(--f);letter-spacing:.08em;font-size:1.2re
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--brass);padding:11px 20px;border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.5);animation:rise .3s ease-out;z-index:50}
 .toast.bad{border-color:var(--wait)}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes pulse{50%{opacity:.55}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:520px){.row{grid-template-columns:1fr}h1{font-size:2.5rem}}
@@ -112,22 +116,44 @@ button,.pk-i{-webkit-tap-highlight-color:transparent}
 h1{font-size:clamp(2.2rem,8vw,3.2rem)}
 .toast{width:max-content;max-width:calc(100vw - 28px);text-align:center;bottom:calc(24px + env(safe-area-inset-bottom))}
 @media (hover:none){button:hover{filter:none;box-shadow:none}}
+@media (pointer:coarse){button,.pk-i{min-height:44px}}
+
+/* ---------- Телефоны: всё под большим пальцем ---------- */
 @media (max-width:760px){
- header{padding-left:14px;padding-right:14px}
+ header{padding-left:14px;padding-right:14px;flex-wrap:nowrap;backdrop-filter:none;background:rgba(23,16,14,.96)}
  .logo{font-size:1.8rem}
+ .rate{margin-left:auto}
  main{padding:24px 14px 36px}
+ main.st{padding-bottom:130px}
  .door{padding:20px 16px}
  .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
  .tabs::-webkit-scrollbar{display:none}
  .tabs button{flex:none}
- button{min-height:44px}
- nav button{padding:8px 12px;font-size:.9rem;min-height:40px}
- .pick button{min-width:44px}
- .acts button{flex:1 1 auto}
+ button{min-height:48px}
+ /* нижняя панель навигации */
+ nav{position:fixed;left:0;right:0;bottom:0;z-index:25;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;flex-wrap:nowrap;background:rgba(23,16,14,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:0 env(safe-area-inset-left) env(safe-area-inset-bottom) env(safe-area-inset-right)}
+ nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:58px;padding:6px 2px;border:0;border-radius:0;background:transparent;box-shadow:none;font-size:.68rem;font-weight:400}
+ nav button .ic{display:block;font-size:1.35rem;line-height:1}
+ nav button .lb{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ nav button .rl{display:none}
+ nav button.cur{color:var(--brass);box-shadow:inset 0 2px 0 var(--brass);background:rgba(212,172,85,.08)}
+ /* вкладки персонала над нижней панелью */
+ .tabs.top{position:fixed;left:0;right:0;top:auto;bottom:var(--nh,60px);margin:0;padding:8px 12px;z-index:24;background:rgba(23,16,14,.96);border-top:1px solid var(--line);border-bottom:0}
+ .pick button{min-width:48px}
+ .acts button{flex:1 1 40%;min-height:48px}
  .grid{grid-template-columns:1fr}
  .stat span{font-size:2.2rem}
+ .go{width:100%;min-height:54px}
+ footer{padding-bottom:calc(20px + var(--nh,60px))}
+ .toast{bottom:calc(var(--nh,60px) + 76px)}
+ /* выбор достижений — шторка снизу */
+ .pk-panel{position:fixed;left:0;right:0;top:auto;bottom:0;margin:0;z-index:40;border-radius:16px 16px 0 0;padding:12px 12px calc(12px + env(safe-area-inset-bottom));box-shadow:0 0 0 100vmax rgba(0,0,0,.55)}
+ .pk-list{max-height:min(46dvh,360px)}
+ .pk-i{padding:13px 12px;min-height:48px;justify-content:center}
+ .pk-q{padding:12px 13px}
+ .pk-done{display:block}
 }
-@media (max-width:380px){.row{grid-template-columns:1fr}h2{font-size:1.35rem}.logo{font-size:1.5rem}.go{width:100%}}
+@media (max-width:380px){.row{grid-template-columns:1fr}h2{font-size:1.35rem}.logo{font-size:1.5rem}}
 @media (min-width:1400px){body{font-size:17px}main.wide{max-width:1200px}}
 @media (max-height:480px) and (orientation:landscape){header{position:static}.tabs.top{top:0}}
 .tag{display:inline-flex;gap:4px;align-items:center;background:rgba(212,172,85,.14);border:1px solid var(--brass);border-radius:99px;padding:2px 4px 2px 12px;font-size:.88rem;margin:8px 6px 0 0}
@@ -149,7 +175,7 @@ h1{font-size:clamp(2.2rem,8vw,3.2rem)}
 .flow.in .step .n{transform:scale(1)}
 details{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;margin:0 0 10px;transition:border-color .2s}
 details[open]{border-color:var(--brass)}
-summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:10px}
+summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:10px;min-height:28px;align-items:center}
 summary::-webkit-details-marker{display:none}
 summary::after{content:"+";color:var(--brass);font-size:1.3rem;line-height:1;transition:transform .3s}
 details[open] summary::after{transform:rotate(45deg)}
@@ -172,7 +198,7 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Владелец"};
-const ST = {new:"Новая", in_progress:"Выполняется", closed:"Закрыта"};
+const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
 const PL = {discord:"Discord", telegram:"Telegram"};
 const fmt = d => new Date(d).toLocaleString("ru-RU", {dateStyle:"short", timeStyle:"short"});
 const h = (t, p = {}, ...k) => {
@@ -324,11 +350,12 @@ async function loadMe() {
   profiles = Object.fromEntries((r.data || []).map(p => [p.id, p]));
 }
 function drawNav() {
-  const nb = (v, ...l) => h("button", {class:"ghost", "data-v":v, onclick:() => go(v)}, ...l);
-  $("nav").replaceChildren(nb("home", "Заявка"), nb("how", "Как работает"), nb("forum", "Форум"), ...(me ? [
-    nb("staff", me.nickname, h("span", {class:"rl"}, " · " + ROLE[me.role])),
-    h("button", {class:"ghost", onclick:async () => { await db.auth.signOut(); me = null; drawNav(); go("home"); }}, "Выйти")
-  ] : [nb("login", "Вход")]));
+  const nb = (v, ic, ...l) => h("button", {class:"ghost", "data-v":v, onclick:() => go(v)}, h("span", {class:"ic", "aria-hidden":"true"}, ic), h("span", {class:"lb"}, ...l));
+  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("how", "?", "Как работает"), nb("forum", "☰", "Форум"), ...(me ? [
+    nb("staff", "☺", me.nickname, h("span", {class:"rl"}, " · " + ROLE[me.role])),
+    h("button", {class:"ghost", onclick:async () => { await db.auth.signOut(); me = null; drawNav(); go("home"); }}, h("span", {class:"ic", "aria-hidden":"true"}, "⎋"), h("span", {class:"lb"}, "Выйти"))
+  ] : [nb("login", "⚿", "Вход")]));
+  setHH();
 }
 async function drawFoot() {
   const { data } = await db.rpc("service_rating");
@@ -340,7 +367,7 @@ async function drawFoot() {
 }
 async function go(v) {
   const box = h("div", {class:"view"});
-  $("app").className = v === "staff" ? "wide" : "";
+  $("app").className = v === "staff" ? "wide st" : "";
   $("app").replaceChildren(box);
   document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("cur", b.dataset.v === v));
   window.scrollTo(0, 0);
@@ -360,7 +387,8 @@ function picker(items, max = 5) {
   const btn = h("button", {type:"button", class:"ghost pk-btn"}, "Выбери достижения");
   const q = h("input", {class:"pk-q", placeholder:"Поиск достижения…", "aria-label":"Поиск достижения"});
   const ul = h("div", {class:"pk-list", role:"listbox"});
-  const panel = h("div", {class:"pk-panel"}, q, ul);
+  const done = h("button", {type:"button", class:"pk-done", onclick:() => { panel.hidden = true; }}, "Готово");
+  const panel = h("div", {class:"pk-panel"}, q, ul, done);
   panel.hidden = true;
   const tags = h("div");
   const el = h("div", {class:"pk"}, btn, panel, tags);
@@ -415,13 +443,14 @@ function picker(items, max = 5) {
     if (!panel.hidden) {
       q.value = "";
       draw();
-      q.focus();
+      if (!matchMedia("(pointer:coarse)").matches) q.focus();
     }
   };
 
   q.oninput = draw;
+  // composedPath: после перерисовки списка e.target уже не в DOM, но путь события сохраняется
   document.addEventListener("click", e => {
-    if (!el.contains(e.target)) panel.hidden = true;
+    if (!e.composedPath().includes(el)) panel.hidden = true;
   });
 
   return {
@@ -503,6 +532,7 @@ async function drawMine(box) {
     const s = data?.[0]; if (!s) continue;
     const c = h("div", {class:"card " + s.status}, h("b", {}, s.achievement.split("; ").join(" · ")),
       h("div", {class:"meta"}, h("span", {class:"pill " + s.status}, ST[s.status]), s.staff ? ` помощник: ${s.staff}` : ""));
+    if (s.status === "waiting") c.append(h("div", {class:"meta"}, "Заявка на паузе. Помощник вернётся к ней, когда будет готов."));
     if (s.status === "new") c.append(h("div", {class:"acts"}, h("button", {class:"ghost", onclick:async () => {
       if (!confirm("Отозвать заявку?")) return;
       const { error } = await db.rpc("cancel_request", {p_token:t});
@@ -519,12 +549,13 @@ async function drawMine(box) {
 function how(box) {
   const S = [["Выбери достижения", "Найди нужные в списке с поиском. В одной заявке можно выбрать до пяти."],
     ["Расскажи, как связаться", "Укажи Discord или Telegram и юзернейм. По желанию добавь награду: с ней заявку берут быстрее."],
-    ["Помощник берёт заявку", "Статус меняется на «Выполняется», и помощник пишет тебе в мессенджер. Пока заявку никто не взял, её можно отозвать."],
+    ["Помощник берёт заявку", "Статус меняется на «Выполняется», и помощник пишет тебе в мессенджер. Если нужно отложить, заявка переходит в «Ожидание». Пока заявку никто не взял, её можно отозвать."],
     ["Играете вместе", "Договоритесь о времени, зайдите в DOORS и выполните достижения."],
     ["Оцени помощь", "Когда заявка закрыта, поставь звёзды и оставь комментарий. Из оценок складывается рейтинг сервиса."]];
   const F = [["Нужен ли аккаунт?", "Нет. Посетителям достаточно ника в Roblox и юзернейма в Discord или Telegram."],
     ["Просят ли пароль от Roblox?", "Никогда. Если кто-то просит пароль, не отдавай его и сообщи владельцу."],
     ["Как отозвать заявку?", "В блоке «Мои заявки» на главной нажми «Отозвать». Это можно сделать, пока заявку не взяли в работу."],
+    ["Что значит статус «Ожидание»?", "Помощник поставил заявку на паузу, например, пока вы договариваетесь о времени. Потом он вернёт её в работу."],
     ["Почему я не вижу заявку на другом устройстве?", "Статус хранится в браузере, где заявка была отправлена."]];
   const flow = h("div", {class:"flow"}, h("div", {class:"line"}), S.map(([t, d], i) =>
     h("div", {class:"step", style:`--i:${i}`}, h("div", {class:"n"}, String(i + 1)), h("div", {class:"card"}, h("b", {}, t), h("div", {class:"meta"}, d)))));
@@ -561,7 +592,7 @@ async function staffView(box) {
   const pane = h("div");
   const draw = async () => { clearInterval(timer); const p = h("div", {class:"view"}); pane.replaceChildren(p); await T.find(t => t[0] === tab)[2](p); };
   const tabs = h("div", {class:"tabs top"}, T.map(([k, l]) => h("button", {class:k === tab ? "on" : "", onclick:e => {
-    tab = k; [...tabs.children].forEach(b => b.classList.remove("on")); e.currentTarget.classList.add("on"); draw();
+    tab = k; [...tabs.children].forEach(b => b.classList.remove("on")); e.currentTarget.classList.add("on"); window.scrollTo(0, 0); draw();
   }}, l)));
   box.append(tabs, pane);
   await draw();
@@ -571,9 +602,11 @@ async function tabRequests(box) {
   let data = [], first = true;
   const btns = Object.keys(ST).map(k => { const b = h("button", {class:k === rf ? "on" : "", onclick:() => { rf = k; btns.forEach(x => x.classList.toggle("on", x === b)); first = true; fill(); }}, ST[k]); b.dataset.k = k; return b; });
   chips.append(...btns, h("button", {class:"ghost", style:"margin-left:auto", onclick:() => load(true)}, "Обновить"));
+  const MSG = {hold_request:"Заявка переведена в ожидание.", resume_request:"Заявка снова в работе."};
   const act = async (fn, args, c) => {
     const { error } = await db.rpc(fn, args);
     if (error) return toast(error.message, 1);
+    if (MSG[fn]) toast(MSG[fn]);
     if (fn === "delete_request") { c.classList.add("out"); await sleep(260); }
     load(true);
   };
@@ -592,7 +625,14 @@ async function tabRequests(box) {
       h("div", {class:"meta"}, h("span", {class:"pill " + r.status}, ST[r.status]), `${r.taken_by && profiles[r.taken_by] ? " " + profiles[r.taken_by].nickname + " ·" : ""} ${fmt(r.created_at)}`));
     const a = h("div", {class:"acts"});
     if (r.status === "new") a.append(h("button", {onclick:() => act("start_request", {p_id:r.id}, c)}, "Начать работу"));
-    if (r.status === "in_progress" && can) a.append(h("button", {onclick:() => act("close_request", {p_id:r.id}, c)}, "Закрыть заявку"), h("button", {class:"ghost", onclick:() => transferUI(c, r)}, "Передать"));
+    if (r.status === "in_progress" && can) a.append(
+      h("button", {onclick:() => act("close_request", {p_id:r.id}, c)}, "Закрыть заявку"),
+      h("button", {class:"hold", onclick:() => act("hold_request", {p_id:r.id}, c)}, "В ожидание"),
+      h("button", {class:"ghost", onclick:() => transferUI(c, r)}, "Передать"));
+    if (r.status === "waiting" && can) a.append(
+      h("button", {onclick:() => act("resume_request", {p_id:r.id}, c)}, "Вернуть в работу"),
+      h("button", {class:"ghost", onclick:() => act("close_request", {p_id:r.id}, c)}, "Закрыть заявку"),
+      h("button", {class:"ghost", onclick:() => transferUI(c, r)}, "Передать"));
     a.append(h("button", {class:"bad", onclick:() => confirm("Удалить заявку?") && act("delete_request", {p_id:r.id}, c)}, "Удалить"));
     c.append(a); return c;
   };
@@ -648,8 +688,8 @@ async function tabStaff(box) {
 }
 async function tabLog(box) {
   const { data } = await db.from("action_log").select("*").order("created_at", {ascending:false}).limit(200);
-  const L = {start:"начал(а) работу", close:"закрыл(а)", delete:"удалил(а)", cancel:"отозвал(а) заявку", transfer:"передал(а) заявку"};
-  const C = {start:"in_progress", close:"closed", delete:"new", cancel:"new", transfer:"in_progress"};
+  const L = {start:"начал(а) работу", close:"закрыл(а)", delete:"удалил(а)", cancel:"отозвал(а) заявку", transfer:"передал(а) заявку", hold:"перевёл(а) в ожидание", resume:"вернул(а) в работу"};
+  const C = {start:"in_progress", close:"closed", delete:"new", cancel:"new", transfer:"in_progress", hold:"waiting", resume:"in_progress"};
   box.append(...(data?.length ? data.map((x, i) => h("div", {class:"card " + (C[x.action] || ""), style:`--i:${Math.min(i, 12)}`},
     h("b", {}, `${x.action === "cancel" ? "Посетитель" : profiles[x.staff_id]?.nickname || "удалённый аккаунт"} ${L[x.action] || x.action}`), h("div", {}, x.summary), h("div", {class:"meta"}, fmt(x.created_at)))) : [h("p", {class:"empty"}, "Журнал пуст.")]));
 }
@@ -691,8 +731,12 @@ async function tabAch(box) {
   load();
 }
 
-const setHH = () => document.documentElement.style.setProperty("--hh", document.querySelector("header").offsetHeight + "px");
-new ResizeObserver(setHH).observe(document.querySelector("header")); setHH();
+const setHH = () => {
+  const s = document.documentElement.style;
+  s.setProperty("--hh", document.querySelector("header").offsetHeight + "px");
+  s.setProperty("--nh", $("nav").offsetHeight + "px");
+};
+const ro = new ResizeObserver(setHH); ro.observe(document.querySelector("header")); ro.observe($("nav")); setHH();
 $("logo").onclick = () => go("home");
 (async () => { await loadMe(); drawNav(); drawFoot(); go(me ? "staff" : "home"); })();
 </script>
