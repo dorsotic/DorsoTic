@@ -27,9 +27,15 @@ body{margin:0;color:var(--text);font:16px/1.55 Georgia,"Times New Roman",serif;m
 header{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:calc(12px + env(safe-area-inset-top)) 22px 12px;background:rgba(23,16,14,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .logo{font-family:var(--f);font-size:2.1rem;line-height:1;cursor:pointer;letter-spacing:.06em;color:var(--brass);text-shadow:0 0 18px rgba(212,172,85,.4);transition:text-shadow .3s}
 .logo:hover{text-shadow:0 0 28px rgba(212,172,85,.8)}
-nav{display:flex;gap:8px;flex-wrap:wrap}
-nav button.cur{border-color:var(--brass);color:var(--brass)}
-.ic{display:none}
+nav{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:25;display:flex;gap:4px;padding:5px;max-width:calc(100vw - 16px);background:rgba(37,25,21,.94);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.55),inset 0 0 0 2px rgba(0,0,0,.18)}
+nav button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:64px;min-height:48px;padding:4px 9px;font-size:.68rem;font-weight:400;white-space:nowrap;border:1px solid transparent;border-radius:11px;background:transparent;color:var(--text);box-shadow:none}
+nav button:hover{background:rgba(212,172,85,.1);border-color:var(--line)}
+nav button .ic{display:block;font-size:1.2rem;line-height:1}
+nav button .lb{max-width:88px;overflow:hidden;text-overflow:ellipsis}
+nav button .rl{display:none}
+nav button .k{position:absolute;top:1px;right:5px;font-size:.55rem;color:var(--mute);opacity:.7}
+nav button.cur{border-color:var(--brass);color:var(--brass);background:rgba(212,172,85,.14)}
+@media (pointer:coarse){nav button .k{display:none}}
 main{flex:1;width:100%;max-width:760px;margin:0 auto;padding:36px 18px 48px;transition:max-width .3s}
 main.wide{max-width:1000px}
 h1,h2,.logo,.go,.tabs button,footer div:first-child,.step .n,.stat span{font-family:var(--f);font-weight:400;letter-spacing:.05em}
@@ -130,13 +136,6 @@ h1{font-size:clamp(2.2rem,8vw,3.2rem)}
  .tabs::-webkit-scrollbar{display:none}
  .tabs button{flex:none}
  button{min-height:48px}
- /* нижняя панель навигации */
- nav{position:fixed;left:0;right:0;bottom:0;z-index:25;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;flex-wrap:nowrap;background:rgba(23,16,14,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:0 env(safe-area-inset-left) env(safe-area-inset-bottom) env(safe-area-inset-right)}
- nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:58px;padding:6px 2px;border:0;border-radius:0;background:transparent;box-shadow:none;font-size:.68rem;font-weight:400}
- nav button .ic{display:block;font-size:1.35rem;line-height:1}
- nav button .lb{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
- nav button .rl{display:none}
- nav button.cur{color:var(--brass);box-shadow:inset 0 2px 0 var(--brass);background:rgba(212,172,85,.08)}
  /* вкладки персонала над нижней панелью */
  .tabs.top{position:fixed;left:0;right:0;top:auto;bottom:var(--nh,60px);margin:0;padding:8px 12px;z-index:24;background:rgba(23,16,14,.96);border-top:1px solid var(--line);border-bottom:0}
  .pick button{min-width:48px}
@@ -180,12 +179,62 @@ summary::-webkit-details-marker{display:none}
 summary::after{content:"+";color:var(--brass);font-size:1.3rem;line-height:1;transition:transform .3s}
 details[open] summary::after{transform:rotate(45deg)}
 details p{margin:10px 0 0;color:var(--mute);animation:rise .3s ease-out}
+
+/* ---------- Компактный режим + хотбар ---------- */
+body{font-size:15px;line-height:1.45}
+header{padding:calc(7px + env(safe-area-inset-top)) 16px 7px}
+.logo{font-size:1.6rem}
+.rate{padding:3px 10px;font-size:.8rem}
+main{padding:20px 16px 100px}
+h1{font-size:clamp(1.8rem,6vw,2.5rem);margin-bottom:6px}
+h2{font-size:1.25rem;margin:22px 0 10px}
+.sub{margin:0 0 18px;font-size:.92rem}
+.door{padding:16px}
+label,.lbl{margin:10px 0 0;font-size:.84rem}
+input,textarea,select{padding:7px 10px;font-size:.95rem;margin-top:4px}
+textarea{min-height:64px}
+button{padding:6px 13px;font-size:.88rem}
+.go{margin-top:14px;padding:8px 20px;font-size:1rem}
+.tabs{gap:6px;margin-bottom:12px}
+.tabs button{padding:5px 12px;font-size:.84rem}
+.tabs.top{padding:7px 10px;margin:-8px -10px 12px}
+.grid{gap:8px}
+.card{padding:9px 12px;margin:0 0 8px}
+.card b{font-size:.98rem}
+.meta{font-size:.82rem;margin-top:2px}
+.acts{gap:6px;margin-top:8px}
+.acts button{padding:5px 11px;font-size:.84rem}
+.stats{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.stat{padding:9px 12px;font-size:.84rem}
+.stat span{font-size:2rem}
+.pick button{font-size:1.5rem}
+.tag{margin:6px 5px 0 0;font-size:.82rem}
+details{padding:9px 13px;margin:0 0 8px}
+footer{padding:14px 16px calc(96px + env(safe-area-inset-bottom))}
+footer div:first-child{font-size:1rem}
+.toast{bottom:calc(var(--nh,58px) + 26px + env(safe-area-inset-bottom));padding:8px 16px;font-size:.9rem}
+@media (pointer:coarse){button{min-height:40px}.pk-i{min-height:44px}}
+@media (max-width:760px){
+ header{padding-left:12px;padding-right:12px}
+ main{padding:16px 12px 100px}
+ main.st{padding-bottom:150px}
+ button{min-height:40px}
+ .acts button{min-height:38px;flex:1 1 30%}
+ .pick button{min-width:40px}
+ .go{min-height:44px}
+ .stat span{font-size:1.8rem}
+ nav{left:8px;right:8px;transform:none;max-width:none;gap:2px;padding:4px}
+ nav button{flex:1 1 0;min-width:0;min-height:46px;padding:4px 2px;font-size:.62rem}
+ nav button .lb{max-width:100%}
+ .tabs.top{bottom:calc(var(--nh,58px) + 16px + env(safe-area-inset-bottom));padding:6px 10px}
+}
 </style>
 </head>
 <body>
-<header><div class="logo" id="logo">DorsoTic</div><div class="rate" id="rate"></div><nav id="nav"></nav></header>
+<header><div class="logo" id="logo">DorsoTic</div><div class="rate" id="rate"></div></header>
 <main id="app"></main>
 <footer id="foot"></footer>
+<nav id="nav" aria-label="Хотбар"></nav>
 
 <script>
 // Вставь данные из Supabase: Project Settings → API
@@ -355,6 +404,7 @@ function drawNav() {
     nb("staff", "☺", me.nickname, h("span", {class:"rl"}, " · " + ROLE[me.role])),
     h("button", {class:"ghost", onclick:async () => { await db.auth.signOut(); me = null; drawNav(); go("home"); }}, h("span", {class:"ic", "aria-hidden":"true"}, "⎋"), h("span", {class:"lb"}, "Выйти"))
   ] : [nb("login", "⚿", "Вход")]));
+  [...$("nav").children].forEach((b, i) => b.append(h("span", {class:"k", "aria-hidden":"true"}, String(i + 1))));
   setHH();
 }
 async function drawFoot() {
@@ -738,6 +788,10 @@ const setHH = () => {
 };
 const ro = new ResizeObserver(setHH); ro.observe(document.querySelector("header")); ro.observe($("nav")); setHH();
 $("logo").onclick = () => go("home");
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  const b = $("nav").children[+e.key - 1]; if (b) b.click();
+});
 (async () => { await loadMe(); drawNav(); drawFoot(); go(me ? "staff" : "home"); })();
 </script>
 </body>
