@@ -6,6 +6,7 @@
 <title>Достижения DOORS: помощь с ачивками и форум — DorsoTic</title>
 <meta name="description" content="DorsoTic — помощь с достижениями в DOORS (Roblox). Оставь заявку, и помощник свяжется с тобой в Discord или Telegram и поможет получить ачивки.">
 <meta name="theme-color" content="#17100e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2317100e'/%3E%3Cpath d='M9 28V12a7 7 0 0 1 14 0v16z' fill='none' stroke='%23d4ac55' stroke-width='2.5'/%3E%3Ccircle cx='19.5' cy='20' r='1.6' fill='%23d4ac55'/%3E%3C/svg%3E">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Достижения DOORS: помощь с ачивками и форум — DorsoTic">
 <meta property="og:description" content="Оставь заявку, и помощник поможет получить достижения в DOORS.">
@@ -20,8 +21,8 @@
 }
 
 /* ВСТАВЬ СЮДА СВОЙ @font-face{font-family:"Doors";...} БЕЗ ИЗМЕНЕНИЙ */
-:root{--bg:#17100e;--panel:#251915;--panel2:#2e201a;--line:#46322a;--text:#f1e6d3;--mute:#a8927c;--brass:#d4ac55;--ok:#8fb573;--wait:#e0905f;--hold:#7fa6d1;--r:.6rem;--f:"Doors",Georgia,serif}
-html{font-size:15px;-webkit-text-size-adjust:100%}
+:root{--bg:#17100e;--panel:#251915;--panel2:#2e201a;--line:#46322a;--text:#f1e6d3;--mute:#bda88f;--brass:#d4ac55;--ok:#8fb573;--wait:#e0905f;--hold:#7fa6d1;--r:.6rem;--f:"Doors",Georgia,serif}
+html{font-size:14px;-webkit-text-size-adjust:100%}
 *{box-sizing:border-box}
 body{margin:0;color:var(--text);font:1rem/1.45 Georgia,"Times New Roman",serif;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);
  background:radial-gradient(ellipse at 50% -10%,rgba(212,172,85,.14),transparent 55%),repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 2px,transparent 2px 40px),var(--bg);background-attachment:fixed}
@@ -141,11 +142,11 @@ details p{margin:.5rem 0 0;color:var(--mute);animation:rise .3s ease-out}
 button,.pk-i{-webkit-tap-highlight-color:transparent}
 @media (hover:none){button:hover{filter:none;box-shadow:none}}
 @media (pointer:coarse){button{min-height:2.4rem}input,textarea,select{font-size:16px}.pk-i{padding:.6rem}}
-@media (min-width:1400px){html{font-size:16px}}
+@media (min-width:1400px){html{font-size:15px}}
 @media (max-height:480px) and (orientation:landscape){header{position:static}}
 /* ---------- меньший экран: всё мельче ---------- */
 @media (max-width:760px){
- html{font-size:14px}
+ html{font-size:13.5px}
  header{padding-left:.8rem;padding-right:.8rem}
  main{padding:1rem .8rem calc(var(--nh,50px) + 2.2rem)}
  main.st{padding-bottom:calc(var(--nh,50px) + 4.8rem)}
@@ -168,6 +169,22 @@ button,.pk-i{-webkit-tap-highlight-color:transparent}
  .rate small.t{display:none}
  nav button{min-width:3.9rem;padding:.3rem .6rem}
 }
+/* ---------- оформление ---------- */
+.view>h1::after{content:"";display:block;width:5rem;height:2px;margin:.55rem auto 0;background:linear-gradient(90deg,transparent,var(--brass),transparent)}
+.door::before{content:"";position:absolute;inset:.4rem;border:1px solid rgba(212,172,85,.13);border-radius:.8rem .8rem 0 0;pointer-events:none}
+.door>*:not(.hp){position:relative}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:0 4px 14px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.03)}
+@media (hover:hover){.card:not(.out):hover{transform:translateY(-1px)}}
+.card.waiting.old{box-shadow:0 4px 14px rgba(0,0,0,.28),0 0 0 1px rgba(224,144,95,.55)}
+.warn{color:var(--wait)}
+.sq{margin:0 0 .6rem}
+.stat{position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(var(--brass),transparent)}
+nav button.cur::after{content:"";position:absolute;left:30%;right:30%;bottom:.1rem;height:2px;border-radius:2px;background:var(--brass)}
+nav button{position:relative}
+nav button .ic{font-size:1.05rem}
+.acts button.ghost,.tr button{white-space:nowrap}
+.sep{height:1px;margin:1rem 0;background:linear-gradient(90deg,transparent,var(--line),transparent)}
 </style>
 </head>
 <body>
@@ -208,6 +225,9 @@ function count(el, n) {
   let t0; const step = t => { t0 ??= t; const p = Math.min((t - t0) / 700, 1); el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
+const ago = d => { const m = Math.max(0, Math.round((Date.now() - new Date(d)) / 6e4)); if (m < 60) return m + " мин"; const hh = Math.round(m / 60); return hh < 48 ? hh + " ч" : Math.round(hh / 24) + " дн"; };
+const copy = (t, ok) => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast(ok), () => toast("Не удалось скопировать.", 1));
+const linkBtn = t => h("button", {class:"ghost", onclick:() => copy(location.origin + location.pathname + "#t=" + t, "Ссылка скопирована. Открой её на другом устройстве.")}, "Ссылка на заявку");
 const toks = () => { try { return JSON.parse(localStorage.getItem("tk") || "[]"); } catch { return []; } };
 const saveToks = a => { try { localStorage.setItem("tk", JSON.stringify(a.slice(-5))); } catch {} };
 
@@ -360,7 +380,7 @@ async function go(v) {
   const box = h("div", {class:"view"});
   $("app").className = v === "staff" ? "wide st" : "";
   $("app").replaceChildren(box);
-  document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("cur", b.dataset.v === v));
+  document.querySelectorAll("#nav button").forEach(b => { const on = b.dataset.v === v; b.classList.toggle("cur", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"); });
   window.scrollTo(0, 0);
   clearInterval(timer); document.title = TITLE;
   if (v === "staff") drawFoot();
@@ -480,7 +500,7 @@ async function home(box) {
     const token = crypto.randomUUID();
     const { error } = await db.from("requests").insert({token, nickname:nick.value.trim(), achievement:chosen.join("; "), reward:reward.value.trim() || null, platform:plat.value, username:"@" + u, note:note.value.trim() || null});
     btn.disabled = false;
-    if (error) { msg.textContent = "Не получилось отправить. Попробуй позже."; return; }
+    if (error) { msg.textContent = error.code === "P0001" ? error.message : "Не получилось отправить. Попробуй позже."; return; }
     saveToks([...toks(), token]);
     try { localStorage.setItem("last", Date.now()); } catch {}
     [nick, un, note, reward].forEach(i => i.value = ""); pk.clear();
@@ -524,7 +544,8 @@ async function drawMine(box) {
     const c = h("div", {class:"card " + s.status}, h("b", {}, s.achievement.split("; ").join(" · ")),
       h("div", {class:"meta"}, h("span", {class:"pill " + s.status}, ST[s.status]), s.staff ? ` помощник: ${s.staff}` : ""));
     if (s.status === "waiting") c.append(h("div", {class:"meta"}, "Заявка на паузе. Помощник вернётся к ней, когда будет готов."));
-    if (s.status === "new") c.append(h("div", {class:"acts"}, h("button", {class:"ghost", onclick:async () => {
+    if (s.status !== "new" && s.status !== "closed") c.append(h("div", {class:"acts"}, linkBtn(t)));
+    if (s.status === "new") c.append(h("div", {class:"acts"}, linkBtn(t), h("button", {class:"ghost", onclick:async () => {
       if (!confirm("Отозвать заявку?")) return;
       const { error } = await db.rpc("cancel_request", {p_token:t});
       if (error) return toast(error.message, 1);
@@ -546,7 +567,7 @@ function how(box) {
   const F = [["Нужен ли аккаунт?", "Нет. Посетителям достаточно ника в Roblox и юзернейма в Discord или Telegram."],
     ["Просят ли пароль от Roblox?", "Никогда. Если кто-то просит пароль, не отдавай его и сообщи владельцу."],
     ["Как отозвать заявку?", "В блоке «Мои заявки» на главной нажми «Отозвать». Это можно сделать, пока заявку не взяли в работу."],
-    ["Когда заявку могут удалить?", "Заявки, которые не будут выполнены в течение 3 дней из-за проблем со стороны клиента, будут удалены. Например, если ты не выходишь на связь или не можешь зайти в игру."],
+    ["Когда заявку могут удалить?", "Заявки, которые не будут выполнены в течение 3 дней из-за проблем со стороны клиента, будут удалены. Например, если ты не выходишь на связь или не можешь зайти в игру. Удаление происходит автоматически."],
     ["Что значит статус «Ожидание»?", "Помощник поставил заявку на паузу, например, пока вы договариваетесь о времени. Потом он вернёт её в работу."],
     ["Почему я не вижу заявку на другом устройстве?", "Статус хранится в браузере, где заявка была отправлена."]];
   const flow = h("div", {class:"flow"}, h("div", {class:"line"}), S.map(([t, d], i) =>
@@ -599,7 +620,7 @@ async function tabManage(box) {
 }
 async function tabRequests(box) {
   const list = h("div", {class:"grid"}), chips = h("div", {class:"tabs"});
-  let data = [], first = true;
+  let data = [], first = true, q = "";
   const btns = Object.keys(ST).map(k => { const b = h("button", {class:k === rf ? "on" : "", onclick:() => { rf = k; btns.forEach(x => x.classList.toggle("on", x === b)); first = true; fill(); }}, ST[k]); b.dataset.k = k; return b; });
   chips.append(...btns, h("button", {class:"ghost", title:"Обновить", style:"margin-left:auto", onclick:() => load(true)}, "⟳"));
   const MSG = {hold_request:"Заявка переведена в ожидание.", resume_request:"Заявка снова в работе."};
@@ -615,30 +636,40 @@ async function tabRequests(box) {
     const sel = h("select", {}, h("option", {value:""}, "В общую очередь"), Object.values(profiles).filter(p => p.id !== me.id).map(p => h("option", {value:p.id}, `${p.nickname} (${ROLE[p.role]})`)));
     c.append(h("div", {class:"tr"}, sel, h("button", {onclick:() => act("transfer_request", {p_id:r.id, p_to:sel.value || null}, c)}, "Передать")));
   };
+  const holdUI = (c, r) => {
+    const old = c.querySelector(".tr"); if (old) return old.remove();
+    const inp = h("input", {maxlength:120, placeholder:"Причина или до когда ждём (по желанию)", style:"margin:0;flex:1 1 12rem"});
+    c.append(h("div", {class:"tr"}, inp, h("button", {class:"hold", onclick:() => act("hold_request", {p_id:r.id, p_note:inp.value.trim() || null}, c)}, "В ожидание")));
+  };
   const card = (r, i) => {
     const can = r.taken_by === me.id || me.role !== "moderator";
-    const c = h("div", {class:"card " + r.status, style:`--i:${Math.min(i, 12)}`},
+    const left = r.status === "waiting" ? Math.round((new Date(r.held_at || r.created_at).getTime() + 3 * 864e5 - Date.now()) / 36e5) : null;
+    const old = left !== null && left < 24;
+    const c = h("div", {class:"card " + r.status + (old ? " old" : ""), style:`--i:${Math.min(i, 12)}`},
       h("b", {}, r.achievement.split("; ").join(" · ")),
       h("div", {}, `${r.nickname} · ${PL[r.platform]} ${r.username}`),
       r.reward ? h("div", {class:"gift"}, "Награда: " + r.reward) : null,
       r.note ? h("div", {}, r.note) : null,
-      h("div", {class:"meta"}, h("span", {class:"pill " + r.status}, ST[r.status]), `${r.taken_by && profiles[r.taken_by] ? " " + profiles[r.taken_by].nickname + " ·" : ""} ${fmt(r.created_at)}`));
+      r.hold_note ? h("div", {class:"meta"}, "Ожидание: " + r.hold_note) : null,
+      left !== null ? h("div", {class:"meta warn"}, left <= 0 ? "Скоро будет удалена автоматически" : `Автоудаление через ${left < 48 ? left + " ч" : Math.ceil(left / 24) + " дн"}`) : null,
+      h("div", {class:"meta"}, h("span", {class:"pill " + r.status}, ST[r.status]), `${r.taken_by && profiles[r.taken_by] ? " " + profiles[r.taken_by].nickname + " ·" : ""} ${fmt(r.created_at)} · ${ago(r.created_at)} назад`));
     const a = h("div", {class:"acts"});
     if (r.status === "new") a.append(h("button", {onclick:() => act("start_request", {p_id:r.id}, c)}, "Начать работу"));
     if (r.status === "in_progress" && can) a.append(
       h("button", {onclick:() => act("close_request", {p_id:r.id}, c)}, "Закрыть заявку"),
-      h("button", {class:"hold", onclick:() => act("hold_request", {p_id:r.id}, c)}, "В ожидание"),
+      h("button", {class:"hold", onclick:() => holdUI(c, r)}, "В ожидание"),
       h("button", {class:"ghost", onclick:() => transferUI(c, r)}, "Передать"));
     if (r.status === "waiting" && can) a.append(
       h("button", {onclick:() => act("resume_request", {p_id:r.id}, c)}, "Вернуть в работу"),
       h("button", {class:"ghost", onclick:() => act("close_request", {p_id:r.id}, c)}, "Закрыть заявку"),
       h("button", {class:"ghost", onclick:() => transferUI(c, r)}, "Передать"));
+    a.append(h("button", {class:"ghost", onclick:() => copy(r.username, "Контакт скопирован: " + r.username)}, "Копировать контакт"));
     a.append(h("button", {class:"bad", onclick:() => confirm("Удалить заявку?") && act("delete_request", {p_id:r.id}, c)}, "Удалить"));
     c.append(a); return c;
   };
   const fill = () => {
     btns.forEach(b => b.textContent = `${ST[b.dataset.k]} (${data.filter(r => r.status === b.dataset.k).length})`);
-    const rows = data.filter(r => r.status === rf).sort((a, b) => !!b.reward - !!a.reward);
+    const rows = data.filter(r => r.status === rf && (!q || `${r.nickname} ${r.achievement} ${r.username}`.toLowerCase().includes(q))).sort((a, b) => !!b.reward - !!a.reward);
     list.classList.toggle("still", !first);
     list.replaceChildren(...(rows.length ? rows.map(card) : [h("p", {class:"empty"}, "Здесь пока пусто.")]));
     first = false;
@@ -652,7 +683,8 @@ async function tabRequests(box) {
     lastNew = n; document.title = (n ? `(${n}) ` : "") + TITLE;
     data = d; if (manual) first = true; fill();
   };
-  box.append(chips, list);
+  const sq = h("input", {class:"sq", placeholder:"Поиск: ник, достижение, юзернейм…", "aria-label":"Поиск по заявкам", oninput:e => { q = e.target.value.trim().toLowerCase(); fill(); }});
+  box.append(chips, sq, list);
   await load(true);
   timer = setInterval(() => load(), 15000);
 }
@@ -660,17 +692,27 @@ async function tabProfile(box) {
   let uid = me.id;
   const out = h("div");
   const draw = async () => {
-    const [{ data: s }, { data: rv }] = await Promise.all([db.rpc("staff_stats", {p_uid:uid}), db.from("reviews").select("stars,comment,created_at").eq("staff_id", uid).order("created_at", {ascending:false}).limit(10)]);
+    const [{ data: s }, { data: rv }] = await Promise.all([db.rpc("staff_stats", {p_uid:uid}), db.from("reviews").select("id,stars,comment,created_at").eq("staff_id", uid).order("created_at", {ascending:false}).limit(10)]);
     const cells = [["Сегодня", s.day], ["Неделя", s.week], ["Месяц", s.month], ["Всё время", s.total]].map(([l, n]) => { const sp = h("span", {}, "0"); count(sp, n); return h("div", {class:"stat"}, sp, l); });
     out.replaceChildren(h("h2", {}, "Аналитика: закрытых заявок"), h("div", {class:"stats"}, cells),
       h("h2", {}, "Отзывы"), s.avg ? h("div", {}, stars(s.avg), ` ${s.avg} из 5 · всего: ${s.reviews}`) : h("p", {class:"empty"}, "Отзывов пока нет."),
-      ...(rv || []).map(r => h("div", {class:"card closed"}, stars(r.stars), r.comment ? h("div", {}, r.comment) : null, h("div", {class:"meta"}, fmt(r.created_at)))));
+      ...(rv || []).map(r => h("div", {class:"card closed"}, stars(r.stars), r.comment ? h("div", {}, r.comment) : null, h("div", {class:"meta"}, fmt(r.created_at)), me.role === "owner" ? h("div", {class:"acts"}, h("button", {class:"ghost", onclick:async () => { if (!confirm("Удалить отзыв?")) return; const { error } = await db.from("reviews").delete().eq("id", r.id); if (error) return toast("Не удалось удалить отзыв.", 1); toast("Отзыв удалён."); draw(); drawFoot(); }}, "Удалить отзыв")) : null)));
   };
   if (me.role === "owner") {
     const sel = h("select", {onchange:e => { uid = e.target.value; draw(); }}, Object.values(profiles).map(p => h("option", {value:p.id}, `${p.nickname} · ${ROLE[p.role]}`)));
     sel.value = me.id; box.append(fld("Сотрудник", sel));
   }
-  box.append(out, h("div", {class:"acts", style:"margin-top:1.2rem"}, h("button", {class:"ghost", onclick:async () => { await db.auth.signOut(); me = null; drawNav(); go("home"); }}, `Выйти (${me.nickname} · ${ROLE[me.role]})`)));
+  const pw = h("input", {type:"password", placeholder:"Новый пароль, от 8 символов", autocomplete:"new-password"});
+  const pwBtn = h("button", {class:"ghost", onclick:async () => {
+    if (pw.value.length < 8) return toast("Пароль: минимум 8 символов.", 1);
+    pwBtn.disabled = true;
+    const { error } = await db.auth.updateUser({password:pw.value});
+    pwBtn.disabled = false;
+    if (error) return toast("Не удалось сменить пароль.", 1);
+    pw.value = ""; toast("Пароль изменён.");
+  }}, "Сменить пароль");
+  box.append(out, h("div", {class:"sep"}), h("h2", {style:"margin-top:0"}, "Аккаунт"), fld("Новый пароль", pw),
+    h("div", {class:"acts"}, pwBtn, h("button", {class:"ghost", onclick:async () => { await db.auth.signOut(); me = null; drawNav(); go("home"); }}, `Выйти (${me.nickname} · ${ROLE[me.role]})`)));
   await draw();
 }
 async function tabStaff(box) {
@@ -739,6 +781,7 @@ const setHH = () => {
 };
 const ro = new ResizeObserver(setHH); ro.observe(document.querySelector("header")); ro.observe($("nav")); setHH();
 $("logo").onclick = () => go("home");
+try { const m = location.hash.match(/^#t=([0-9a-f-]{36})$/i); if (m) { if (!toks().includes(m[1])) saveToks([...toks(), m[1]]); history.replaceState(null, "", location.pathname + location.search); } } catch {}
 (async () => {
   try { await loadMe(); } catch (e) { console.error(e); me = null; }
   drawNav(); drawFoot().catch(() => {});
