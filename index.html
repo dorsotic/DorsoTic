@@ -64,6 +64,7 @@ button.bad{background:#a5473a;color:#fff}
 button.hold{background:var(--hold);color:#0f1a26}
 .go{margin-top:.9rem;letter-spacing:.08em;font-size:1.05rem;padding:.5rem 1.3rem}
 .hp{position:absolute;left:-9999px;width:1px}
+.door .meta{text-align:center}
 .msg{margin-top:.5rem;min-height:1.3em;font-size:.9rem}.err{color:var(--wait)}.good{color:var(--ok)}
 .tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.7rem}
 .tabs button{background:rgba(0,0,0,.25);color:var(--mute);border:1px solid var(--line);box-shadow:none;letter-spacing:.06em;padding:.3rem .8rem;font-size:.85rem}
@@ -498,7 +499,7 @@ async function home(box) {
       fld("Ник в Roblox", nick), h("div", {class:"lbl"}, "Какие достижения нужны (до 5)", pk.el),
       fld("Награда за помощь (по желанию). С наградой заявку берут быстрее", reward),
       h("div", {class:"row"}, fld("Где связаться", plat), fld("Юзернейм", un)),
-      fld("Комментарий (по желанию)", note), site, btn, msg), mine);
+      fld("Комментарий (по желанию)", note), site, btn, msg, h("div", {class:"meta", style:"margin-top:.6rem"}, "Заявки, которые не будут выполнены в течение 3 дней из-за проблем со стороны клиента, будут удалены.")), mine);
   drawMine(mine);
 }
 function reviewForm(t, done) {
@@ -545,6 +546,7 @@ function how(box) {
   const F = [["Нужен ли аккаунт?", "Нет. Посетителям достаточно ника в Roblox и юзернейма в Discord или Telegram."],
     ["Просят ли пароль от Roblox?", "Никогда. Если кто-то просит пароль, не отдавай его и сообщи владельцу."],
     ["Как отозвать заявку?", "В блоке «Мои заявки» на главной нажми «Отозвать». Это можно сделать, пока заявку не взяли в работу."],
+    ["Когда заявку могут удалить?", "Заявки, которые не будут выполнены в течение 3 дней из-за проблем со стороны клиента, будут удалены. Например, если ты не выходишь на связь или не можешь зайти в игру."],
     ["Что значит статус «Ожидание»?", "Помощник поставил заявку на паузу, например, пока вы договариваетесь о времени. Потом он вернёт её в работу."],
     ["Почему я не вижу заявку на другом устройстве?", "Статус хранится в браузере, где заявка была отправлена."]];
   const flow = h("div", {class:"flow"}, h("div", {class:"line"}), S.map(([t, d], i) =>
