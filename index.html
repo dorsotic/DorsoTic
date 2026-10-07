@@ -1,746 +1,793 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DorsoTic — redesign concept</title>
-  <style>
-    :root {
-      --bg: #120d0b;
-      --bg-soft: #1a1310;
-      --panel: rgba(33, 24, 20, 0.92);
-      --panel-2: rgba(43, 31, 26, 0.96);
-      --line: rgba(212, 172, 85, 0.18);
-      --line-strong: rgba(212, 172, 85, 0.42);
-      --text: #f6ead8;
-      --muted: #c4af90;
-      --accent: #d4ac55;
-      --accent-2: #f2d18a;
-      --green: #84b06b;
-      --orange: #d98652;
-      --blue: #7fa6d1;
-      --red: #b65a52;
-      --shadow: 0 20px 60px rgba(0,0,0,.45);
-      --radius: 18px;
-      --radius-sm: 12px;
-      --wrap: 1180px;
-    }
-
-    * { box-sizing: border-box; }
-    html { -webkit-text-size-adjust: 100%; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      color: var(--text);
-      font: 16px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top, rgba(212,172,85,.12), transparent 32%),
-        linear-gradient(180deg, #17100e 0%, #0f0b09 100%);
-    }
-
-    .noise::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      opacity: .18;
-      background-image:
-        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
-      background-size: 26px 26px;
-      mask-image: linear-gradient(180deg, rgba(0,0,0,.95), rgba(0,0,0,.3));
-    }
-
-    .wrap {
-      width: min(calc(100% - 32px), var(--wrap));
-      margin: 0 auto;
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 30;
-      backdrop-filter: blur(16px);
-      background: rgba(17, 12, 10, .76);
-      border-bottom: 1px solid rgba(255,255,255,.06);
-    }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      min-height: 76px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      min-width: 0;
-    }
-
-    .logo {
-      width: 44px;
-      height: 44px;
-      display: grid;
-      place-items: center;
-      border-radius: 14px;
-      border: 1px solid var(--line-strong);
-      background: linear-gradient(180deg, rgba(212,172,85,.14), rgba(212,172,85,.04));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
-      color: var(--accent-2);
-      font-weight: 800;
-      letter-spacing: .08em;
-    }
-
-    .brand h1 {
-      margin: 0;
-      font-size: clamp(1.2rem, 1rem + 1vw, 1.6rem);
-      line-height: 1.05;
-      color: var(--accent-2);
-    }
-
-    .brand p {
-      margin: 2px 0 0;
-      color: var(--muted);
-      font-size: .9rem;
-    }
-
-    .rating {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.03);
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .rating strong { color: var(--text); font-size: 1rem; }
-    .stars { color: var(--accent); letter-spacing: .18em; }
-
-    main {
-      padding: 34px 0 120px;
-    }
-
-    .hero {
-      display: grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap: 22px;
-      align-items: stretch;
-      margin-bottom: 24px;
-    }
-
-    .panel {
-      background: linear-gradient(180deg, rgba(40,29,24,.94), rgba(26,20,17,.96));
-      border: 1px solid rgba(255,255,255,.06);
-      border-radius: 28px;
-      box-shadow: var(--shadow);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .panel::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      border: 1px solid rgba(212,172,85,.08);
-      border-radius: inherit;
-      mask: linear-gradient(#000, transparent 35%);
-    }
-
-    .hero-copy {
-      padding: 34px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 360px;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      width: fit-content;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(212,172,85,.08);
-      border: 1px solid rgba(212,172,85,.16);
-      color: var(--accent-2);
-      font-size: .84rem;
-    }
-
-    .hero h2 {
-      margin: 18px 0 10px;
-      font-size: clamp(2rem, 1.35rem + 2vw, 3.3rem);
-      line-height: .95;
-      letter-spacing: -.03em;
-      max-width: 11ch;
-    }
-
-    .hero p {
-      margin: 0;
-      max-width: 58ch;
-      color: var(--muted);
-      font-size: 1.02rem;
-    }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 28px;
-    }
-
-    .btn {
-      appearance: none;
-      border: 0;
-      border-radius: 14px;
-      padding: 14px 18px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
-    }
-
-    .btn:hover { transform: translateY(-1px); }
-    .btn.primary {
-      color: #271b0a;
-      background: linear-gradient(180deg, #e5c57c, #d4ac55);
-      box-shadow: 0 10px 24px rgba(212,172,85,.24);
-    }
-    .btn.secondary {
-      color: var(--text);
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.09);
-    }
-
-    .hero-side {
-      padding: 24px;
-      display: grid;
-      gap: 14px;
-      align-content: start;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-
-    .stat {
-      padding: 18px;
-      border-radius: 20px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.06);
-    }
-
-    .stat b {
-      display: block;
-      font-size: 1.8rem;
-      color: var(--accent-2);
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-
-    .stat span {
-      color: var(--muted);
-      font-size: .92rem;
-    }
-
-    .process {
-      padding: 20px;
-      border-radius: 22px;
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border: 1px solid rgba(255,255,255,.06);
-    }
-
-    .process h3,
-    .form-card h3,
-    .section h3 { margin: 0 0 14px; font-size: 1.05rem; }
-
-    .steps {
-      display: grid;
-      gap: 10px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .steps li {
-      display: grid;
-      grid-template-columns: 34px 1fr;
-      gap: 12px;
-      align-items: start;
-      color: var(--muted);
-      font-size: .94rem;
-    }
-
-    .steps li i {
-      width: 34px;
-      height: 34px;
-      display: grid;
-      place-items: center;
-      border-radius: 12px;
-      background: rgba(212,172,85,.1);
-      border: 1px solid rgba(212,172,85,.2);
-      color: var(--accent-2);
-      font-style: normal;
-      font-weight: 800;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 360px;
-      gap: 22px;
-      align-items: start;
-    }
-
-    .form-card,
-    .section {
-      padding: 24px;
-    }
-
-    .section + .section { margin-top: 18px; }
-
-    .kicker {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-
-    .kicker p {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: .95rem;
-    }
-
-    .grid {
-      display: grid;
-      gap: 14px;
-    }
-
-    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
-    label {
-      display: grid;
-      gap: 8px;
-      color: var(--text);
-      font-weight: 600;
-      font-size: .92rem;
-    }
-
-    .hint {
-      margin: -2px 0 0;
-      color: var(--muted);
-      font-size: .82rem;
-      font-weight: 500;
-    }
-
-    input, textarea, select {
-      width: 100%;
-      border: 1px solid rgba(255,255,255,.09);
-      background: rgba(10, 8, 7, .4);
-      color: var(--text);
-      border-radius: 14px;
-      padding: 14px 15px;
-      font: inherit;
-      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
-    }
-
-    input::placeholder, textarea::placeholder { color: #9f8f7a; }
-
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: rgba(212,172,85,.55);
-      box-shadow: 0 0 0 4px rgba(212,172,85,.12);
-      background: rgba(12,10,8,.55);
-    }
-
-    textarea { min-height: 120px; resize: vertical; }
-
-    .picker {
-      display: grid;
-      gap: 10px;
-      padding: 14px;
-      border: 1px dashed rgba(212,172,85,.3);
-      border-radius: 16px;
-      background: rgba(212,172,85,.04);
-    }
-
-    .picker-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.09);
-      background: rgba(255,255,255,.04);
-      color: var(--muted);
-      font-size: .82rem;
-      font-weight: 700;
-    }
-
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .chip {
-      border-radius: 999px;
-      padding: 10px 12px;
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.08);
-      color: var(--text);
-      font-size: .88rem;
-    }
-
-    .actions-row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .note {
-      color: var(--muted);
-      font-size: .85rem;
-    }
-
-    .list {
-      display: grid;
-      gap: 12px;
-    }
-
-    .ticket {
-      padding: 16px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.06);
-      display: grid;
-      gap: 10px;
-    }
-
-    .ticket-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: start;
-    }
-
-    .ticket b { font-size: 1rem; }
-
-    .ticket p,
-    .ticket small { margin: 0; color: var(--muted); }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      border-radius: 999px;
-      padding: 7px 10px;
-      font-size: .75rem;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .pill.orange { color: #2c1b0f; background: #df9b67; }
-    .pill.gold { color: #2c1b0f; background: #d4ac55; }
-    .pill.blue { color: #13283d; background: #8bb2de; }
-    .pill.green { color: #102412; background: #95c27b; }
-
-    .faq {
-      display: grid;
-      gap: 12px;
-    }
-
-    details {
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.06);
-      background: rgba(255,255,255,.03);
-      padding: 16px 18px;
-    }
-
-    summary {
-      cursor: pointer;
-      font-weight: 700;
-      list-style: none;
-    }
-
-    summary::-webkit-details-marker { display: none; }
-    details p { color: var(--muted); margin: 12px 0 0; }
-
-    .bottom-nav {
-      display: none;
-    }
-
-    .nav-item {
-      display: grid;
-      place-items: center;
-      gap: 6px;
-      min-height: 58px;
-      border-radius: 18px;
-      color: var(--muted);
-      background: transparent;
-      border: 1px solid transparent;
-      font: inherit;
-      cursor: pointer;
-    }
-
-    .nav-item.active {
-      color: var(--accent-2);
-      background: rgba(212,172,85,.08);
-      border-color: rgba(212,172,85,.22);
-    }
-
-    .muted { color: var(--muted); }
-
-    @media (max-width: 1040px) {
-      .hero,
-      .layout { grid-template-columns: 1fr; }
-      .hero-copy { min-height: auto; }
-    }
-
-    @media (max-width: 720px) {
-      .topbar { min-height: 68px; }
-      .rating { display: none; }
-      main { padding-top: 22px; }
-      .hero-copy, .hero-side, .form-card, .section { padding: 20px; }
-      .grid.two, .stats { grid-template-columns: 1fr; }
-      .bottom-nav {
-        position: fixed;
-        left: 50%;
-        right: auto;
-        bottom: 18px;
-        transform: translateX(-50%);
-        z-index: 40;
-        display: grid;
-        width: min(calc(100% - 24px), 620px);
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-        padding: 8px;
-        border-radius: 24px;
-        background: rgba(24, 18, 15, .9);
-        border: 1px solid rgba(255,255,255,.07);
-        backdrop-filter: blur(18px);
-        box-shadow: 0 18px 50px rgba(0,0,0,.42);
-      }
-      .nav-item { min-height: 54px; font-size: .78rem; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Достижения DOORS: помощь с ачивками и форум — DorsoTic</title>
+<meta name="description" content="DorsoTic — помощь с достижениями в DOORS (Roblox). Оставь заявку, и помощник свяжется с тобой в Discord или Telegram и поможет получить ачивки.">
+<meta name="theme-color" content="#17100e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2317100e'/%3E%3Cpath d='M9 28V12a7 7 0 0 1 14 0v16z' fill='none' stroke='%23d4ac55' stroke-width='2.5'/%3E%3Ccircle cx='19.5' cy='20' r='1.6' fill='%23d4ac55'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Достижения DOORS: помощь с ачивками и форум — DorsoTic">
+<meta property="og:description" content="Оставь заявку, и помощник поможет получить достижения в DOORS.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+@font-face{
+  font-family:"Doors";
+  src:url("Doors%20Cyrillic%20Font.ttf") format("truetype");
+  font-display:swap;
+  font-weight:400;
+  font-style:normal;
+}
+
+/* ВСТАВЬ СЮДА СВОЙ @font-face{font-family:"Doors";...} БЕЗ ИЗМЕНЕНИЙ */
+:root{--bg:#17100e;--panel:#251915;--panel2:#2e201a;--line:#46322a;--text:#f1e6d3;--mute:#bda88f;--brass:#d4ac55;--ok:#8fb573;--wait:#e0905f;--hold:#7fa6d1;--r:.6rem;--f:"Doors",Georgia,serif}
+html{font-size:14px;-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font:1rem/1.45 Georgia,"Times New Roman",serif;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);
+ background:radial-gradient(ellipse at 50% -10%,rgba(212,172,85,.14),transparent 55%),repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 2px,transparent 2px 40px),var(--bg);background-attachment:fixed}
+header{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:calc(.5rem + env(safe-area-inset-top)) 1rem .5rem;background:rgba(23,16,14,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.logo{font-size:1.7rem;line-height:1;cursor:pointer;color:var(--brass);text-shadow:0 0 18px rgba(212,172,85,.4);transition:text-shadow .3s}
+.logo:hover{text-shadow:0 0 28px rgba(212,172,85,.8)}
+/* показатель сервиса */
+.rate{display:inline-flex;align-items:center;gap:.4rem;padding:.18rem .7rem;border:1px solid var(--line);border-radius:99px;font-size:.8rem;color:var(--mute);background:rgba(0,0,0,.22);white-space:nowrap;transition:border-color .3s,box-shadow .3s}
+.rate .stars{font-size:.95rem;letter-spacing:1px}
+.rate b{font-size:1.05rem;line-height:1;color:var(--brass)}
+.rate small{font-size:.74rem}
+.rate.has{border-color:var(--brass);box-shadow:0 0 14px rgba(212,172,85,.2)}
+/* хотбар */
+nav{position:fixed;left:50%;bottom:calc(.6rem + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:25;display:flex;gap:.2rem;padding:.25rem;background:rgba(37,25,21,.95);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:1.1rem;box-shadow:0 8px 26px rgba(0,0,0,.55)}
+nav button{display:flex;flex-direction:column;align-items:center;gap:.05rem;min-width:4.4rem;padding:.35rem .8rem;border:1px solid transparent;border-radius:.8rem;background:transparent;color:var(--mute);font-size:.7rem;font-weight:400;box-shadow:none;filter:none}
+nav button:hover{background:rgba(212,172,85,.08);color:var(--text);box-shadow:none;filter:none}
+nav button .ic{font-size:1.15rem;line-height:1}
+nav button.cur,nav button.cur:hover{color:var(--brass);background:rgba(212,172,85,.14);border-color:rgba(212,172,85,.5)}
+main{flex:1;width:100%;max-width:44rem;margin:0 auto;padding:1.3rem 1rem calc(var(--nh,50px) + 2.4rem);transition:max-width .3s}
+main.wide{max-width:62rem}
+h1,h2,.logo,.go,.tabs button,.seg button,.step .n,.stat span,.rate b{font-family:var(--f);font-weight:400;letter-spacing:.05em}
+h1{font-size:clamp(1.8rem,7vw,2.4rem);line-height:1.05;margin:0 0 .4rem;color:var(--brass);text-shadow:0 0 30px rgba(212,172,85,.3)}
+h2{font-size:1.3rem;margin:1.4rem 0 .6rem}
+.sub{color:var(--mute);margin:0 0 1.1rem;font-size:.92rem}
+.view>h1,.view>.sub{text-align:center}
+.view{animation:fade .4s ease-out}
+.door{background:linear-gradient(180deg,var(--panel2),var(--panel));border:2px solid var(--line);border-radius:1rem 1rem 0 0;padding:1rem;position:relative;box-shadow:0 18px 40px rgba(0,0,0,.4),inset 0 0 0 5px rgba(0,0,0,.14)}
+label,.lbl{display:block;margin:.65rem 0 0;font-size:.82rem;color:var(--mute)}
+input,textarea,select{display:block;width:100%;margin-top:.25rem;background:rgba(0,0,0,.28);color:var(--text);border:1px solid var(--line);border-radius:var(--r);padding:.45rem .65rem;font:inherit;font-size:.95rem;transition:border-color .2s,box-shadow .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--brass);box-shadow:0 0 0 3px rgba(212,172,85,.22);outline:none}
+textarea{min-height:4rem;resize:vertical}
+.row{display:grid;grid-template-columns:9rem 1fr;gap:.6rem}
+button{background:var(--brass);color:#241a06;border:0;border-radius:var(--r);padding:.4rem .85rem;font:inherit;font-size:.88rem;font-weight:700;cursor:pointer;transition:transform .12s,filter .2s,background .2s,box-shadow .2s}
+button:hover{filter:brightness(1.1);box-shadow:0 4px 14px rgba(212,172,85,.25)}button:active{transform:scale(.95)}
+button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+button:disabled{opacity:.5;cursor:wait}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);box-shadow:none}
+button.ghost:hover{border-color:var(--brass);background:rgba(212,172,85,.09)}
+button.bad{background:#a5473a;color:#fff}
+button.hold{background:var(--hold);color:#0f1a26}
+.go{margin-top:.9rem;letter-spacing:.08em;font-size:1.05rem;padding:.5rem 1.3rem}
+.hp{position:absolute;left:-9999px;width:1px}
+.door .meta{text-align:center}
+.msg{margin-top:.5rem;min-height:1.3em;font-size:.9rem}.err{color:var(--wait)}.good{color:var(--ok)}
+.tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.7rem}
+.tabs button{background:rgba(0,0,0,.25);color:var(--mute);border:1px solid var(--line);box-shadow:none;letter-spacing:.06em;padding:.3rem .8rem;font-size:.85rem}
+.tabs button:hover{color:var(--text)}
+.tabs button.on{background:var(--brass);color:#241a06;border-color:var(--brass)}
+.tabs.top{position:sticky;top:var(--hh,48px);z-index:10;margin:-.4rem -.6rem .8rem;padding:.5rem .6rem;background:rgba(23,16,14,.9);backdrop-filter:blur(8px)}
+.seg{display:flex;gap:.2rem;padding:.2rem;margin-bottom:.8rem;border:1px solid var(--line);border-radius:.7rem;background:rgba(0,0,0,.25)}
+.seg button{flex:1;background:transparent;color:var(--mute);box-shadow:none;padding:.3rem .5rem;font-size:.85rem}
+.seg button.on{background:var(--brass);color:#241a06}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(17rem,100%),1fr));gap:.5rem}
+.grid .card{margin:0}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-left:4px solid var(--line);border-radius:var(--r);padding:.55rem .75rem;margin:0 0 .5rem;box-shadow:0 6px 16px rgba(0,0,0,.25);animation:rise .4s ease-out both;animation-delay:calc(var(--i,0)*45ms);transition:opacity .25s,transform .25s,border-color .2s}
+@media (hover:hover){.card:hover{border-color:var(--brass)}}
+.card.new{border-left-color:var(--wait)}.card.in_progress{border-left-color:var(--brass)}.card.waiting{border-left-color:var(--hold)}.card.closed{border-left-color:var(--ok)}
+.card.out{opacity:0;transform:translateX(30px)}
+.card b{display:block;font-size:.98rem;margin-bottom:.1rem}
+.meta{color:var(--mute);font-size:.8rem;margin-top:.15rem}
+.pill{display:inline-block;padding:0 .6rem;border-radius:99px;font-size:.72rem;font-weight:700;color:#241a06;background:var(--mute)}
+.pill.new{background:var(--wait)}.pill.in_progress{background:var(--brass);animation:pulse 1.6s ease-in-out infinite}.pill.waiting{background:var(--hold)}.pill.closed{background:var(--ok)}
+.acts{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem}
+.acts button{padding:.3rem .7rem;font-size:.82rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr));gap:.5rem}
+.stat{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:.5rem .75rem;color:var(--mute);font-size:.8rem}
+.stat span{display:block;font-size:1.9rem;line-height:1.1;color:var(--brass)}
+.stars{font-size:1.05rem;letter-spacing:2px;background:linear-gradient(90deg,var(--brass) var(--v,0%),var(--line) var(--v,0%));-webkit-background-clip:text;background-clip:text;color:transparent}
+.pick{display:flex;gap:.1rem;margin-top:.3rem}
+.pick button{background:none;color:var(--line);font-size:1.6rem;padding:0 .2rem;box-shadow:none;transition:color .15s,transform .15s}
+.pick button.on{color:var(--brass);transform:scale(1.18)}
+.pk{position:relative}
+.pk-btn{width:100%;text-align:left;margin-top:.25rem;font-weight:400;background:rgba(0,0,0,.28)}
+.pk-panel{position:absolute;left:0;right:0;top:100%;z-index:5;margin-top:.25rem;background:var(--panel2);border:1px solid var(--brass);border-radius:var(--r);padding:.5rem;box-shadow:0 14px 34px rgba(0,0,0,.5);animation:rise .2s ease-out}
+.pk-panel[hidden]{display:none}
+.pk-q{margin:0 0 .35rem;padding:.4rem .6rem;font-size:.9rem}
+.pk-list{max-height:15rem;overflow:auto}
+.pk-i{padding:.35rem .6rem;border-radius:.4rem;cursor:pointer;color:var(--text);transition:background .15s;font-size:.92rem}
+.pk-i:hover,.pk-i:focus{background:rgba(212,172,85,.16);outline:none}
+.pk-i.on{color:var(--brass);font-weight:700}
+.pk-done{display:none;width:100%;margin-top:.4rem}
+.empty{color:var(--mute)}
+.preset{margin-top:.8rem}
+footer{border-top:1px solid var(--line);padding:.8rem 1rem calc(var(--nh,50px) + 1.8rem);text-align:center;color:var(--mute);background:rgba(0,0,0,.2);font-size:.82rem}
+footer .stars{font-size:1.1rem}
+.lk{display:inline-block;margin-top:.5rem;color:var(--mute);font-size:.74rem;opacity:.65;text-decoration:underline dotted;text-underline-offset:3px}
+.lk:hover{color:var(--brass);opacity:1}
+.toast{position:fixed;left:50%;bottom:calc(var(--nh,50px) + 1.6rem + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--panel2);border:1px solid var(--brass);padding:.5rem 1rem;border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.5);animation:rise .3s ease-out;z-index:50;font-size:.9rem;width:max-content;max-width:calc(100vw - 1.5rem);text-align:center}
+.toast.bad{border-color:var(--wait)}
+.tag{display:inline-flex;gap:.2rem;align-items:center;background:rgba(212,172,85,.14);border:1px solid var(--brass);border-radius:99px;padding:.1rem .2rem .1rem .7rem;font-size:.8rem;margin:.4rem .3rem 0 0}
+.tag button{min-height:0!important;padding:0 .5rem;border:0;font-size:1.1rem;line-height:1.4}
+.gift{display:inline-block;padding:0 .6rem;border-radius:99px;background:rgba(143,181,115,.16);color:var(--ok);border:1px solid var(--ok);font-size:.78rem;margin-top:.3rem}
+.rv textarea{min-height:3.4rem;margin-top:.4rem}
+.tr{display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap;animation:rise .25s ease-out}
+.tr select{margin:0;flex:1 1 9rem}
+.still .card{animation:none}
+.card,.meta,.card b{overflow-wrap:anywhere}
+.flow{position:relative;padding-left:3.3rem;margin:.5rem 0 0}
+.flow .line{position:absolute;left:1.05rem;top:0;width:2px;height:100%;background:linear-gradient(var(--brass),transparent);transform:scaleY(0);transform-origin:top;transition:transform 1.8s ease-out}
+.flow.in .line{transform:scaleY(1)}
+.step{position:relative;opacity:0;transform:translateX(-18px);transition:opacity .6s,transform .6s;transition-delay:calc(var(--i)*.28s)}
+.flow.in .step{opacity:1;transform:none}
+.step .card{animation:none}
+.step .n{position:absolute;left:-3.3rem;top:.3rem;width:2.3rem;height:2.3rem;border-radius:50%;background:var(--panel2);border:2px solid var(--brass);display:grid;place-items:center;font-size:1.1rem;color:var(--brass);transform:scale(0);transition:transform .5s cubic-bezier(.3,1.6,.5,1);transition-delay:calc(var(--i)*.28s + .15s)}
+.flow.in .step .n{transform:scale(1)}
+details{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:.5rem .8rem;margin:0 0 .5rem;transition:border-color .2s;font-size:.92rem}
+details[open]{border-color:var(--brass)}
+summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:.6rem;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--brass);font-size:1.2rem;line-height:1;transition:transform .3s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{margin:.5rem 0 0;color:var(--mute);animation:rise .3s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pulse{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+button,.pk-i{-webkit-tap-highlight-color:transparent}
+@media (hover:none){button:hover{filter:none;box-shadow:none}}
+@media (pointer:coarse){button{min-height:2.4rem}input,textarea,select{font-size:16px}.pk-i{padding:.6rem}}
+@media (min-width:1400px){html{font-size:15px}}
+@media (max-height:480px) and (orientation:landscape){header{position:static}}
+/* ---------- меньший экран: всё мельче ---------- */
+@media (max-width:760px){
+ html{font-size:13.5px}
+ header{padding-left:.8rem;padding-right:.8rem}
+ main{padding:1rem .8rem calc(var(--nh,50px) + 2.2rem)}
+ main.st{padding-bottom:calc(var(--nh,50px) + 4.8rem)}
+ .tabs.top{position:fixed;left:0;right:0;top:auto;bottom:calc(var(--nh,50px) + 1.2rem + env(safe-area-inset-bottom));margin:0;padding:.4rem .7rem;z-index:24;background:rgba(23,16,14,.96);border-top:1px solid var(--line)}
+ .tabs.top button{flex:1}
+ .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .tabs::-webkit-scrollbar{display:none}
+ .tabs button{flex:none}
+ .grid{grid-template-columns:1fr}
+ .acts button{flex:1 1 30%}
+ .go{width:100%}
+ .toast{bottom:calc(var(--nh,50px) + 4.2rem + env(safe-area-inset-bottom))}
+ .pk-panel{position:fixed;left:0;right:0;top:auto;bottom:0;margin:0;z-index:40;border-radius:1rem 1rem 0 0;padding:.7rem .7rem calc(.7rem + env(safe-area-inset-bottom));box-shadow:0 0 0 100vmax rgba(0,0,0,.55)}
+ .pk-list{max-height:min(46dvh,22rem)}
+ .pk-done{display:block}
+}
+@media (max-width:520px){.row{grid-template-columns:1fr}}
+@media (max-width:420px){
+ html{font-size:13px}
+ .rate small.t{display:none}
+ nav button{min-width:3.9rem;padding:.3rem .6rem}
+}
+/* ---------- оформление ---------- */
+.view>h1::after{content:"";display:block;width:5rem;height:2px;margin:.55rem auto 0;background:linear-gradient(90deg,transparent,var(--brass),transparent)}
+.door::before{content:"";position:absolute;inset:.4rem;border:1px solid rgba(212,172,85,.13);border-radius:.8rem .8rem 0 0;pointer-events:none}
+.door>*:not(.hp){position:relative}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:0 4px 14px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.03)}
+@media (hover:hover){.card:not(.out):hover{transform:translateY(-1px)}}
+.card.waiting.old{box-shadow:0 4px 14px rgba(0,0,0,.28),0 0 0 1px rgba(224,144,95,.55)}
+.warn{color:var(--wait)}
+.sq{margin:0 0 .6rem}
+.stat{position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(var(--brass),transparent)}
+nav button.cur::after{content:"";position:absolute;left:30%;right:30%;bottom:.1rem;height:2px;border-radius:2px;background:var(--brass)}
+nav button{position:relative}
+nav button .ic{font-size:1.05rem}
+.acts button.ghost,.tr button{white-space:nowrap}
+.sep{height:1px;margin:1rem 0;background:linear-gradient(90deg,transparent,var(--line),transparent)}
+</style>
 </head>
-<body class="noise">
-  <header>
-    <div class="wrap topbar">
-      <div class="brand">
-        <div class="logo">DT</div>
-        <div>
-          <h1>DorsoTic</h1>
-          <p>Помощь с достижениями DOORS без лишней путаницы</p>
-        </div>
-      </div>
-      <div class="rating">
-        <span class="stars">★★★★★</span>
-        <div><strong>4.9</strong> <span class="muted">на основе 128 отзывов</span></div>
-      </div>
-    </div>
-  </header>
+<body>
+<header><div class="logo" id="logo">DorsoTic</div><div class="rate" id="rate"></div></header>
+<main id="app"></main>
+<footer><div id="fr"></div><div id="fl"></div></footer>
+<nav id="nav" aria-label="Хотбар"></nav>
 
-  <main class="wrap">
-    <section class="hero">
-      <div class="panel hero-copy">
-        <div>
-          <div class="eyebrow">DOORS • Roblox • помощь с ачивками</div>
-          <h2>Получай ачивки быстрее, без долгих поисков</h2>
-          <p>Я немного переделал интерфейс: сделал главную понятнее, форму компактнее, статусы заметнее, а навигацию — чище и современнее. Теперь акцент на 3 вещах: быстро оставить заявку, понять статус и не потеряться на мобильном.</p>
-        </div>
-        <div class="hero-actions">
-          <button class="btn primary">Оставить заявку</button>
-          <button class="btn secondary">Как это работ��ет</button>
-        </div>
-      </div>
+<script>
+// Вставь данные из Supabase: Project Settings → API
+const SUPABASE_URL = "https://swdmjwgwripgpcnglhse.supabase.co";
+const SUPABASE_KEY = "sb_publishable_hv4OhCNL1n8A5pbs526FpQ_hX7o6xmb";
 
-      <div class="panel hero-side">
-        <div class="stats">
-          <div class="stat"><b>312</b><span>в��полненных заявок</span></div>
-          <div class="stat"><b>18</b><span>сейчас в работе</span></div>
-          <div class="stat"><b>7</b><span>помощников онлайн</span></div>
-          <div class="stat"><b>3 дн</b><span>автоочистка неактивных</span></div>
-        </div>
-        <div class="process">
-          <h3>Что стало лучше</h3>
-          <ol class="steps">
-            <li><i>1</i><div><strong>Более сильный первый экран</strong><br>сразу понятно, что это за сервис и что делать дальше.</div></li>
-            <li><i>2</i><div><strong>Форма без перегруза</strong><br>поля сгруппированы, выбор достижений стал визуально легче.</div></li>
-            <li><i>3</i><div><strong>Статусы и карточки заметнее</strong><br>состояния заявок проще считывать на телефоне.</div></li>
-          </ol>
-        </div>
-      </div>
-    </section>
+const TITLE = "Достижения DOORS: помощь с ачивками и форум — DorsoTic";
 
-    <section class="layout">
-      <div>
-        <section class="panel form-card">
-          <div class="kicker">
-            <div>
-              <h3>Новая заявка</h3>
-              <p>Форма стала чище и ближе к игровому сервису, а не к админке.</p>
-            </div>
-            <span class="badge">до 5 достижений</span>
-          </div>
+if (typeof supabase === "undefined") {
+  document.getElementById("app").innerHTML = '<div style="text-align:center;padding:3rem 1rem"><h1>Не загрузилось</h1><p class="sub">Не удалось подключить библиотеку базы данных. Проверь интернет, отключи блокировщики рекламы и обнови страницу.</p><button onclick="location.reload()">Обновить</button></div>';
+  throw new Error("supabase library not loaded");
+}
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Владелец"};
+const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
+const PL = {discord:"Discord", telegram:"Telegram"};
+const fmt = d => new Date(d).toLocaleString("ru-RU", {dateStyle:"short", timeStyle:"short"});
+const h = (t, p = {}, ...k) => {
+  const e = document.createElement(t);
+  for (const [a, v] of Object.entries(p)) { if (a === "class") e.className = v; else if (a.startsWith("on")) e[a] = v; else e.setAttribute(a, v); }
+  e.append(...k.flat().filter(x => x != null && x !== false));
+  return e;
+};
+const fld = (label, el) => h("label", {}, label, el);
+const stars = v => h("span", {class:"stars", style:`--v:${(v || 0) / 5 * 100}%`}, "★★★★★");
+function toast(text, bad) { const t = h("div", {class:"toast" + (bad ? " bad" : "")}, text); document.body.append(t); setTimeout(() => t.remove(), 3200); }
+function count(el, n) {
+  if (matchMedia("(prefers-reduced-motion:reduce)").matches) { el.textContent = n; return; }
+  let t0; const step = t => { t0 ??= t; const p = Math.min((t - t0) / 700, 1); el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+const ago = d => { const m = Math.max(0, Math.round((Date.now() - new Date(d)) / 6e4)); if (m < 60) return m + " мин"; const hh = Math.round(m / 60); return hh < 48 ? hh + " ч" : Math.round(hh / 24) + " дн"; };
+const copy = (t, ok) => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast(ok), () => toast("Не удалось скопировать.", 1));
+const linkBtn = t => h("button", {class:"ghost", onclick:() => copy(location.origin + location.pathname + "#t=" + t, "Ссылка скопирована. Открой её на другом устройстве.")}, "Ссылка на заявку");
+const toks = () => { try { return JSON.parse(localStorage.getItem("tk") || "[]"); } catch { return []; } };
+const saveToks = a => { try { localStorage.setItem("tk", JSON.stringify(a.slice(-5))); } catch {} };
 
-          <div class="grid two">
-            <label>
-              Ник в Roblox
-              <input placeholder="Например: DorsoTic" />
-            </label>
-            <label>
-              Где связаться
-              <select>
-                <option>Discord</option>
-                <option>Telegram</option>
-              </select>
-            </label>
-          </div>
+const CAT = {
+  "Welcome": true,
+  "Welcome Back": true,
+  "Buddy System": true,
+  "Group Member": true,
+  "Back From The Dead": true,
+  "One Of Many": true,
+  "Ten Of Many": true,
+  "Hundred Of Many": true,
+  "In Plain Sight": true,
+  "Out Of My Way": true,
+  "Look at Me": true,
+  "Two Steps Forward...": true,
+  "Rebound": true,
+  "I See You": true,
+  "Wrong Room": true,
+  "Eviction Notice": true,
+  "D'oh!": true,
+  "Meet Jack": true,
+  "Meet Timothy": true,
+  "Error": true,
+  "Sshh!": true,
+  "You Can Run": true,
+  "Supporting Small Businesses": true,
+  "Pls Donate": true,
+  "Herb Of Viridis": true,
+  "Interconnected": true,
+  "Lost In Translation": true,
+  "Expert Technician": true,
+  "Evil Be Gone": true,
+  "Stay Out Of My Way": true,
+  "Unbound": true,
+  "Take A Breather": true,
+  "All Figured Out": true,
+  "You Can't See Me": true,
+  "I Hate You": true,
+  "Two Steps Ahead": true,
+  "Outwitted": true,
+  "It's Not My Time": true,
+  "Not Funny": true,
+  "The Bigger They Are": true,
+  "Queen's Gambit": true,
+  "Bug Zapper": true,
+  "Lost In The Dark": true,
+  "Under New Management": true,
+  "Red Mist": true,
+  "Stop Right There": true,
+  "Grin Reaper": true,
+  "Red Light": true,
+  "Lookman No Looking": true,
+  "Time Out": true,
+  "Bug Bomb": true,
+  "Scammed": true,
+  "Playtime's Over": true,
+  "Rock Bottom": true,
+  "Whoever Smelt It": true,
+  "Improvise": true,
+  "Trespassing": true,
+  "Running Track": true,
+  "Down The Drain": true,
+  "See You Soon": true,
+  "A Bone To Pick": true,
+  "Feed the Birds": true,
+  "Picking Flowers": true,
+  "Rebirth": true,
+  "Touched Grass": true,
+  "Down The Water Spout": true,
+  "You Finally Turn Green": true,
+  "Playtime": true,
+  "Trial And Error": true,
+  "Trade Offer": true,
+  "Helping Hand": true,
+  "Trickshot": true,
+  "Just A Prank": true,
+  "I Don't Believe My Eyes": true,
+  "Fried Mushrooms": true,
+  "It's Not Funny": true,
+  "Rocky Road": true,
+  "A Hard Place": true,
+  "Not Five Stars": true,
+  "Hotel Hell": true,
+  "Around Back": true,
+  "Other Way Around": true,
+  "Forgotten Memories": true,
+  "Going Down": true,
+  "Emergency Exit": true,
+  "Z-50": true,
+  "Going Up": true,
+  "Most Valuable Employee": true,
+  "Star Employee": true,
+  "Now Served": true,
+  "Perfect Memory": true,
+  "Shock Hazard": true,
+  "Witness Protection": true,
+  "Carpet Burn": true,
+  "Limitless Paper": true,
+  "Crowd Watching": true,
+  "Firewall": true,
+  "Gold Standard": true,
+  "Quick Purchase": true,
+  "Unpatched Dupe Glitch": true,
+  "Fih Are Friends": true,
+  "Rage Room": true,
+  "Paparazzi": true,
+  "Bubble Popping": true,
+  "Paperclip Challenge": true,
+  "Storage Wars": true,
+  "Hello Walker": true,
+  "REDACTED": true,
+  "Girl Dinner": true,
+  "Enlightened": true,
+  "Pizza Time": true,
+  "It's Still You": true,
+  "Annihilation": true,
+  "Bad Luck": true,
+  "Smashing Deal": true,
+  "Who Am I?": true,
+  "Patience": true,
+  "Mission Successful": true
+};
+let me = null, profiles = {}, tab = "requests", rf = "new", timer = null, lastNew = null;
 
-          <div class="grid" style="margin-top:14px;">
-            <label>
-              Какие достижения нужны
-              <div class="picker">
-                <div class="picker-top">
-                  <button class="btn secondary" type="button">Открыть список достижений</button>
-                  <span class="badge">выбрано 3 / 5</span>
-                </div>
-                <div class="chips">
-                  <span class="chip">Hotel Hell</span>
-                  <span class="chip">A Hard Place</span>
-                  <span class="chip">Not Five Stars</span>
-                </div>
-              </div>
-            </label>
+async function loadMe() {
+  const { data: { user } } = await db.auth.getUser();
+  me = null; if (!user) return;
+  const { data } = await db.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  if (!data) { await db.auth.signOut(); return; }
+  me = data;
+  const r = await db.from("profiles").select("id,nickname,role");
+  profiles = Object.fromEntries((r.data || []).map(p => [p.id, p]));
+}
+function drawNav() {
+  const nb = (v, ic, l) => h("button", {"data-v":v, onclick:() => go(v)}, h("span", {class:"ic", "aria-hidden":"true"}, ic), h("span", {}, l));
+  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("info", "?", "Инфо"), nb("forum", "☰", "Форум"), ...(me ? [nb("staff", "☺", "Панель")] : []));
+  $("fl").replaceChildren(...(me ? [] : [h("a", {href:"#", class:"lk", onclick:e => { e.preventDefault(); go("login"); }}, "Вход для персонала")]));
+  setHH();
+}
+async function drawFoot() {
+  const { data } = await db.rpc("service_rating");
+  const ok = !!data?.avg, avg = ok ? Number(data.avg).toFixed(1) : "";
+  $("rate").className = "rate" + (ok ? " has" : "");
+  $("rate").title = ok ? `Оценка сервиса: ${avg} из 5, отзывов: ${data.count}` : "Оценок пока нет";
+  $("rate").replaceChildren(...[stars(ok ? data.avg : 0), ok ? h("b", {}, avg) : null, h("small", {class:"t"}, ok ? `(${data.count})` : "нет оценок")].filter(Boolean));
+  $("fr").replaceChildren(h("div", {}, ok ? [stars(data.avg), ` ${avg} из 5 · отзывов: ${data.count}`] : "Пока нет отзывов"));
+}
+async function go(v) {
+  const box = h("div", {class:"view"});
+  $("app").className = v === "staff" ? "wide st" : "";
+  $("app").replaceChildren(box);
+  document.querySelectorAll("#nav button").forEach(b => { const on = b.dataset.v === v; b.classList.toggle("cur", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"); });
+  window.scrollTo(0, 0);
+  clearInterval(timer); document.title = TITLE;
+  if (v === "staff") drawFoot();
+  if (v === "home") await home(box); else if (v === "login") login(box); else if (v === "info") how(box); else if (v === "forum") forum(box); else await staffView(box);
+}
 
-            <label>
-              Юзернейм
-              <input placeholder="@username" />
-              <span class="hint">только имя пользователя, без лишних ссылок</span>
-            </label>
+/* ---------- Форум (заглушка) ---------- */
+function forum(box) {
+  box.append(h("h1", {}, "Форум"), h("p", {class:"sub"}, "Скоро будет"));
+}
 
-            <label>
-              Награда за помощь
-              <input placeholder="Например: предмет, валюта или услуга" />
-            </label>
+/* ---------- Выбор достижений с поиском ---------- */
+function picker(items, max = 5) {
+  const sel = [];
+  const btn = h("button", {type:"button", class:"ghost pk-btn"}, "Выбери достижения");
+  const q = h("input", {class:"pk-q", placeholder:"Поиск достижения…", "aria-label":"Поиск достижения"});
+  const ul = h("div", {class:"pk-list", role:"listbox"});
+  const done = h("button", {type:"button", class:"pk-done", onclick:() => { panel.hidden = true; }}, "Готово");
+  const panel = h("div", {class:"pk-panel"}, q, ul, done);
+  panel.hidden = true;
+  const tags = h("div");
+  const el = h("div", {class:"pk"}, btn, panel, tags);
 
-            <label>
-              Комментарий
-              <textarea placeholder="Можно указать удобное время, режим, нюансы по ачивке."></textarea>
-            </label>
-          </div>
+  const refresh = () => {
+    btn.textContent = sel.length ? `Выбрано: ${sel.length} из ${max}` : "Выбери достижения";
+    tags.replaceChildren(...sel.map(n =>
+      h("span", {class:"tag"}, n,
+        h("button", {
+          type:"button",
+          class:"ghost",
+          "aria-label":"Убрать",
+          onclick:() => toggle(n)
+        }, "×")
+      )
+    ));
+    draw();
+  };
 
-          <div class="actions-row" style="margin-top:18px;">
-            <button class="btn primary">Отправить заявку</button>
-            <span class="note">Если никто не выходит на связь 3 дня по вине клиента, заявка удаляется автоматически.</span>
-          </div>
-        </section>
+  const toggle = n => {
+    const i = sel.indexOf(n);
+    if (i >= 0) sel.splice(i, 1);
+    else if (sel.length < max) sel.push(n);
+    else return toast(`Не больше ${max} достижений в одной заявке`, 1);
+    refresh();
+  };
 
-        <section class="panel section">
-          <h3>Как теперь выглядит блок «Мои заявки»</h3>
-          <div class="list">
-            <article class="ticket">
-              <div class="ticket-top">
-                <div>
-                  <b>Hotel Hell · Not Five Stars</b>
-                  <p>Discord · @dorso_helper</p>
-                </div>
-                <span class="pill gold">Выполняется</span>
-              </div>
-              <small>Помощник: DorsoMod · обновлено 12 минут назад</small>
-            </article>
+  const draw = () => {
+    const s = q.value.trim().toLowerCase();
+    const m = items.filter(n => n.toLowerCase().includes(s));
 
-            <article class="ticket">
-              <div class="ticket-top">
-                <div>
-                  <b>Bug Bomb</b>
-                  <p>Telegram · @doorsfan</p>
-                </div>
-                <span class="pill blue">Ожидание</span>
-              </div>
-              <small>Ожидание ответа клиента · автоудаление через 2 дня</small>
-            </article>
+    ul.replaceChildren(
+      ...(m.length
+        ? m.map(n => h(
+            "div",
+            {
+              class:"pk-i" + (sel.includes(n) ? " on" : ""),
+              role:"option",
+              tabindex:"0",
+              onclick:() => toggle(n),
+              onkeydown:e => { if (e.key === "Enter") toggle(n); }
+            },
+            h("span", {}, (sel.includes(n) ? "✓ " : "") + n)
+          ))
+        : [h("div", {class:"pk-i empty"}, items.length ? "Ничего не найдено" : "Список достижений пока пуст")]
+      )
+    );
+  };
 
-            <article class="ticket">
-              <div class="ticket-top">
-                <div>
-                  <b>Welcome Back</b>
-                  <p>Discord · @retroplayer</p>
-                </div>
-                <span class="pill green">Закрыта</span>
-              </div>
-              <small>Можно оценить помощь и оставить отзыв</small>
-            </article>
-          </div>
-        </section>
-      </div>
+  btn.onclick = () => {
+    panel.hidden = !panel.hidden;
+    if (!panel.hidden) {
+      q.value = "";
+      draw();
+      if (!matchMedia("(pointer:coarse)").matches) q.focus();
+    }
+  };
 
-      <aside>
-        <section class="panel section">
-          <h3>Коротко по редизайну</h3>
-          <div class="list">
-            <article class="ticket">
-              <b>1. Новый visual hierarchy</b>
-              <p>Главная теперь начинается не с формы, а с сильного hero-блока и понятного CTA.</p>
-            </article>
-            <article class="ticket">
-              <b>2. Меньше визуального шума</b>
-              <p>Я убрал ощущение «старого форума» и сделал интерфейс более аккуратным, сохранив тёмную атмосферу DOORS.</p>
-            </article>
-            <article class="ticket">
-              <b>3. Лучше на мобильных</b>
-              <p>Карточки, поля и нижняя навигация получили более удобные размеры и отступы.</p>
-            </article>
-          </div>
-        </section>
+  q.oninput = draw;
+  // composedPath: после перерисовки списка e.target уже не в DOM, но путь события сохраняется
+  document.addEventListener("click", e => {
+    if (!e.composedPath().includes(el)) panel.hidden = true;
+  });
 
-        <section class="panel section">
-          <h3>FAQ</h3>
-          <div class="faq">
-            <details open>
-              <summary>Нужен ли отдельный аккаунт?</summary>
-              <p>Нет. Для клиента достаточно ника в Roblox и способа связи.</p>
-            </details>
-            <details>
-              <summary>Можно ли отменить заявку?</summary>
-              <p>Да, пока её не взяли в работу, отмена должна быть на видном месте прямо в карточке.</p>
-            </details>
-            <details>
-              <summary>Что важно оставить без изменений?</summary>
-              <p>Логику Supabase, статусы заявок и работу панели персонала. Менять в первую очередь стоит визуальную оболочку.</p>
-            </details>
-          </div>
-        </section>
-      </aside>
-    </section>
-  </main>
+  return {
+    el,
+    get:() => [...sel],
+    clear:() => {
+      sel.length = 0;
+      refresh();
+    }
+  };
+}
 
-  <nav class="bottom-nav" aria-label="Навигация">
-    <button class="nav-item active">✎<span>Заявка</span></button>
-    <button class="nav-item">⌘<span>Форум</span></button>
-    <button class="nav-item">? <span>Инфо</span></button>
-    <button class="nav-item">☻<span>Панель</span></button>
-  </nav>
+/* ---------- Главная ---------- */
+async function home(box) {
+  const { data: list } = await db.from("achievements").select("name").order("name");
+  const names = new Set((list || []).map(a => a.name));
+  const nick = h("input", {maxlength:40, placeholder:"Ник в Roblox"});
+  const pk = picker((list || []).map(a => a.name));
+  const plat = h("select", {}, h("option", {value:"discord"}, "Discord"), h("option", {value:"telegram"}, "Telegram"));
+  const un = h("input", {maxlength:40, placeholder:"@username"});
+  const note = h("textarea", {maxlength:300});
+  const reward = h("input", {maxlength:100, placeholder:"Например: Бочка, зеркало"});
+  const site = h("input", {class:"hp", tabindex:"-1", autocomplete:"off", "aria-hidden":"true"});
+  const msg = h("div", {class:"msg", role:"status"});
+  const mine = h("div");
+  const btn = h("button", {class:"go"}, "Отправить заявку");
+  btn.onclick = async () => {
+    msg.className = "msg err";
+    if (site.value) return;
+    const u = un.value.trim().replace(/^@/, "");
+    const chosen = pk.get();
+    if (!nick.value.trim() || !chosen.length || !chosen.every(n => names.has(n))) { msg.textContent = "Укажи ник и выбери хотя бы одно достижение."; return; }
+    if (!/^[A-Za-z0-9_.]{2,32}$/.test(u)) { msg.textContent = "Юзернейм: буквы, цифры, _ и точка, например @DorsoNews."; return; }
+    if (Date.now() - (+localStorage.getItem("last") || 0) < 60000) { msg.textContent = "Подожди минуту перед следующей заявкой."; return; }
+    btn.disabled = true;
+    const token = crypto.randomUUID();
+    const { error } = await db.from("requests").insert({token, nickname:nick.value.trim(), achievement:chosen.join("; "), reward:reward.value.trim() || null, platform:plat.value, username:"@" + u, note:note.value.trim() || null});
+    btn.disabled = false;
+    if (error) { msg.textContent = error.code === "P0001" ? error.message : "Не получилось отправить. Попробуй позже."; return; }
+    saveToks([...toks(), token]);
+    try { localStorage.setItem("last", Date.now()); } catch {}
+    [nick, un, note, reward].forEach(i => i.value = ""); pk.clear();
+    msg.className = "msg good"; msg.textContent = "Заявка отправлена. С тобой свяжутся в выбранном мессенджере.";
+    drawMine(mine);
+  };
+  const pubStats = h("div", {class:"stats", style:"margin-bottom:12px"});
+  db.rpc("public_stats").then(({ data: d }) => {
+    if (!d) return;
+    const num = (l, n) => { const sp = h("span", {}, "0"); count(sp, n); return h("div", {class:"stat"}, sp, l); };
+    pubStats.replaceChildren(num("Заявок выполнено", d.closed), num("Сейчас в работе", d.open), num("Помощников", d.staff),
+      h("div", {class:"stat"}, h("span", {}, d.avg ? String(d.avg) : "—"), d.reviews ? `Оценка сервиса, отзывов: ${d.reviews}` : "Оценка сервиса"));
+  });
+  box.append(h("h1", {}, "DorsoTic"), h("p", {class:"sub"}, "Помощь с достижениями в DOORS. Оставь заявку, и с тобой свяжется помощник."), pubStats,
+    h("div", {class:"door"},
+      fld("Ник в Roblox", nick), h("div", {class:"lbl"}, "Какие достижения нужны (до 5)", pk.el),
+      fld("Награда за помощь (по желанию). С наградой заявку берут быстрее", reward),
+      h("div", {class:"row"}, fld("Где связаться", plat), fld("Юзернейм", un)),
+      fld("Комментарий (по желанию)", note), site, btn, msg, h("div", {class:"meta", style:"margin-top:.6rem"}, "Заявки, которые не будут выполнены в течение 3 дней из-за проблем со стороны клиента, будут удалены.")), mine);
+  drawMine(mine);
+}
+function reviewForm(t, done) {
+  let v = 0; const bs = [], pick = h("div", {class:"pick"});
+  const paint = n => bs.forEach((x, j) => x.classList.toggle("on", j < n));
+  for (let i = 1; i <= 5; i++) { const b = h("button", {type:"button", title:i + " из 5", onmouseover:() => paint(i), onclick:() => { v = i; paint(i); }}, "★"); bs.push(b); pick.append(b); }
+  pick.onmouseleave = () => paint(v);
+  const cm = h("textarea", {maxlength:300, placeholder:"Комментарий (по желанию)"});
+  const send = h("button", {onclick:async () => {
+    if (!v) return toast("Выбери оценку от 1 до 5 звёзд.", 1);
+    const { error } = await db.rpc("submit_review", {p_token:t, p_stars:v, p_comment:cm.value.trim() || null});
+    if (error) return toast(error.message, 1);
+    toast("Спасибо за отзыв!"); done();
+  }}, "Отправить отзыв");
+  return h("div", {class:"rv"}, h("div", {class:"meta"}, "Оцени помощь:"), pick, cm, h("div", {class:"acts"}, send));
+}
+async function drawMine(box) {
+  const items = [];
+  for (const t of toks()) {
+    const { data } = await db.rpc("request_status", {p_token:t});
+    const s = data?.[0]; if (!s) continue;
+    const c = h("div", {class:"card " + s.status}, h("b", {}, s.achievement.split("; ").join(" · ")),
+      h("div", {class:"meta"}, h("span", {class:"pill " + s.status}, ST[s.status]), s.staff ? ` помощник: ${s.staff}` : ""));
+    if (s.status === "waiting") c.append(h("div", {class:"meta"}, "Заявка на паузе. Помощник вернётся к ней, когда будет готов."));
+    if (s.status !== "new" && s.status !== "closed") c.append(h("div", {class:"acts"}, linkBtn(t)));
+    if (s.status === "new") c.append(h("div", {class:"acts"}, linkBtn(t), h("button", {class:"ghost", onclick:async () => {
+      if (!confirm("Отозвать заявку?")) return;
+      const { error } = await db.rpc("cancel_request", {p_token:t});
+      if (error) return toast(error.message, 1);
+      saveToks(toks().filter(x => x !== t)); toast("Заявка отозвана."); drawMine(box);
+    }}, "Отозвать заявку")));
+    if (s.status === "closed") c.append(s.reviewed ? h("div", {class:"meta"}, "Спасибо за отзыв!") : reviewForm(t, () => { drawMine(box); drawFoot(); }));
+    items.push(c);
+  }
+  box.replaceChildren(...(items.length ? [h("h2", {}, "Мои заявки"), ...items] : []));
+}
+
+/* ---------- Как это работает ---------- */
+function how(box) {
+  const S = [["Выбери достижения", "Найди нужные в списке с поиском. В одной заявке можно выбрать до пяти."],
+    ["Расскажи, как связаться", "Укажи Discord или Telegram и юзернейм. По желанию добавь награду: с ней заявку берут быстрее."],
+    ["Помощник берёт заявку", "Статус меняется на «Выполняется», и помощник пишет тебе в мессенджер. Если нужно отложить, заявка переходит в «Ожидание». Пока заявку никто не взял, её можно отозвать."],
+    ["Играете вместе", "Договоритесь о времени, зайдите в DOORS и выполните достижения."],
+    ["Оцени помощь", "Когда заявка закрыта, поставь звёзды и оставь комментарий. Из оценок складывается рейтинг сервиса."]];
+  const F = [["Нужен ли аккаунт?", "Нет. Посетителям достаточно ника в Roblox и юзернейма в Discord или Telegram."],
+    ["Просят ли пароль от Roblox?", "Никогда. Если кто-то просит пароль, не отдавай его и сообщи владельцу."],
+    ["Как отозвать заявку?", "В блоке «Мои заявки» на главной нажми «Отозвать». Это можно сделать, пока заявку не взяли в работу."],
+    ["Когда заявку могут удалить?", "Заявки, которые не будут выполнены в течение 3 дней из-за проблем со стороны клиента, будут удалены. Например, если ты не выходишь на связь или не можешь зайти в игру. Удаление происходит автоматически."],
+    ["Что значит статус «Ожидание»?", "Помощник поставил заявку на паузу, например, пока вы договариваетесь о времени. Потом он вернёт её в работу."],
+    ["Почему я не вижу заявку на другом устройстве?", "Статус хранится в браузере, где заявка была отправлена."]];
+  const flow = h("div", {class:"flow"}, h("div", {class:"line"}), S.map(([t, d], i) =>
+    h("div", {class:"step", style:`--i:${i}`}, h("div", {class:"n"}, String(i + 1)), h("div", {class:"card"}, h("b", {}, t), h("div", {class:"meta"}, d)))));
+  box.append(h("h1", {}, "Как это работает"), h("p", {class:"sub"}, "Пять шагов от заявки до достижения."), flow,
+    h("h2", {}, "Частые вопросы"), ...F.map(([q, a]) => h("details", {}, h("summary", {}, q), h("p", {}, a))));
+  const io = new IntersectionObserver(es => { if (es[0].isIntersecting) { flow.classList.add("in"); io.disconnect(); } }, {threshold:.15});
+  io.observe(flow);
+}
+
+/* ---------- Вход ---------- */
+function login(box) {
+  const n = h("input", {autocomplete:"username"}), p = h("input", {type:"password", autocomplete:"current-password"});
+  const msg = h("div", {class:"msg err"});
+  const submit = async () => {
+    msg.textContent = "";
+    const { error } = await db.auth.signInWithPassword({email:n.value.trim().toLowerCase() + "@dorsotic.app", password:p.value});
+    if (error) { msg.textContent = "Неверный ник или пароль."; return; }
+    await loadMe();
+    if (!me) { msg.textContent = "У этого аккаунта нет доступа."; return; }
+    drawNav(); go("staff");
+  };
+  p.onkeydown = e => { if (e.key === "Enter") submit(); };
+  box.append(h("h1", {}, "Вход для персонала"), h("p", {class:"sub"}, "Хочешь стать модератором или админом? Напиши владельцу в Telegram."),
+    h("div", {class:"door"}, fld("Ник", n), fld("Пароль", p), h("button", {class:"go", onclick:submit}, "Войти"), msg));
+}
+
+/* ---------- Панель персонала ---------- */
+async function staffView(box) {
+  if (!me) return go("login");
+  const T = [["requests", "Заявки", tabRequests], ["profile", "Профиль", tabProfile]];
+  if (me.role === "owner") T.push(["ach", "Ачивки", tabAch], ["manage", "Управление", tabManage]);
+  if (!T.some(t => t[0] === tab)) tab = "requests";
+  const pane = h("div");
+  const draw = async () => { clearInterval(timer); const p = h("div", {class:"view"}); pane.replaceChildren(p); await T.find(t => t[0] === tab)[2](p); };
+  const tabs = h("div", {class:"tabs top"}, T.map(([k, l]) => h("button", {class:k === tab ? "on" : "", onclick:e => {
+    tab = k; [...tabs.children].forEach(b => b.classList.remove("on")); e.currentTarget.classList.add("on"); window.scrollTo(0, 0); draw();
+  }}, l)));
+  box.append(tabs, pane);
+  await draw();
+}
+let msub = "team";
+async function tabManage(box) {
+  const S = [["team", "Команда", tabStaff], ["log", "Журнал", tabLog]];
+  const pane = h("div"), seg = h("div", {class:"seg"});
+  const draw = async () => { const p = h("div", {class:"view"}); pane.replaceChildren(p); await S.find(x => x[0] === msub)[2](p); };
+  S.forEach(([k, l]) => seg.append(h("button", {class:k === msub ? "on" : "", onclick:e => { msub = k; [...seg.children].forEach(b => b.classList.remove("on")); e.currentTarget.classList.add("on"); draw(); }}, l)));
+  box.append(seg, pane);
+  await draw();
+}
+async function tabRequests(box) {
+  const list = h("div", {class:"grid"}), chips = h("div", {class:"tabs"});
+  let data = [], first = true, q = "";
+  const btns = Object.keys(ST).map(k => { const b = h("button", {class:k === rf ? "on" : "", onclick:() => { rf = k; btns.forEach(x => x.classList.toggle("on", x === b)); first = true; fill(); }}, ST[k]); b.dataset.k = k; return b; });
+  chips.append(...btns, h("button", {class:"ghost", title:"Обновить", style:"margin-left:auto", onclick:() => load(true)}, "⟳"));
+  const MSG = {hold_request:"Заявка переведена в ожидание.", resume_request:"Заявка снова в работе."};
+  const act = async (fn, args, c) => {
+    const { error } = await db.rpc(fn, args);
+    if (error) return toast(error.message, 1);
+    if (MSG[fn]) toast(MSG[fn]);
+    if (fn === "delete_request") { c.classList.add("out"); await sleep(260); }
+    load(true);
+  };
+  const transferUI = (c, r) => {
+    const old = c.querySelector(".tr"); if (old) return old.remove();
+    const sel = h("select", {}, h("option", {value:""}, "В общую очередь"), Object.values(profiles).filter(p => p.id !== me.id).map(p => h("option", {value:p.id}, `${p.nickname} (${ROLE[p.role]})`)));
+    c.append(h("div", {class:"tr"}, sel, h("button", {onclick:() => act("transfer_request", {p_id:r.id, p_to:sel.value || null}, c)}, "Передать")));
+  };
+  const holdUI = (c, r) => {
+    const old = c.querySelector(".tr"); if (old) return old.remove();
+    const inp = h("input", {maxlength:120, placeholder:"Причина или до когда ждём (по желанию)", style:"margin:0;flex:1 1 12rem"});
+    c.append(h("div", {class:"tr"}, inp, h("button", {class:"hold", onclick:() => act("hold_request", {p_id:r.id, p_note:inp.value.trim() || null}, c)}, "В ожидание")));
+  };
+  const card = (r, i) => {
+    const can = r.taken_by === me.id || me.role !== "moderator";
+    const left = r.status === "waiting" ? Math.round((new Date(r.held_at || r.created_at).getTime() + 3 * 864e5 - Date.now()) / 36e5) : null;
+    const old = left !== null && left < 24;
+    const c = h("div", {class:"card " + r.status + (old ? " old" : ""), style:`--i:${Math.min(i, 12)}`},
+      h("b", {}, r.achievement.split("; ").join(" · ")),
+      h("div", {}, `${r.nickname} · ${PL[r.platform]} ${r.username}`),
+      r.reward ? h("div", {class:"gift"}, "Награда: " + r.reward) : null,
+      r.note ? h("div", {}, r.note) : null,
+      r.hold_note ? h("div", {class:"meta"}, "Ожидание: " + r.hold_note) : null,
+      left !== null ? h("div", {class:"meta warn"}, left <= 0 ? "Скоро будет удалена автоматически" : `Автоудаление через ${left < 48 ? left + " ч" : Math.ceil(left / 24) + " дн"}`) : null,
+      h("div", {class:"meta"}, h("span", {class:"pill " + r.status}, ST[r.status]), `${r.taken_by && profiles[r.taken_by] ? " " + profiles[r.taken_by].nickname + " ·" : ""} ${fmt(r.created_at)} · ${ago(r.created_at)} назад`));
+    const a = h("div", {class:"acts"});
+    if (r.status === "new") a.append(h("button", {onclick:() => act("start_request", {p_id:r.id}, c)}, "Начать работу"));
+    if (r.status === "in_progress" && can) a.append(
+      h("button", {onclick:() => act("close_request", {p_id:r.id}, c)}, "Закрыть заявку"),
+      h("button", {class:"hold", onclick:() => holdUI(c, r)}, "В ожидание"),
+      h("button", {class:"ghost", onclick:() => transferUI(c, r)}, "Передать"));
+    if (r.status === "waiting" && can) a.append(
+      h("button", {onclick:() => act("resume_request", {p_id:r.id}, c)}, "Вернуть в работу"),
+      h("button", {class:"ghost", onclick:() => act("close_request", {p_id:r.id}, c)}, "Закрыть заявку"),
+      h("button", {class:"ghost", onclick:() => transferUI(c, r)}, "Передать"));
+    a.append(h("button", {class:"ghost", onclick:() => copy(r.username, "Контакт скопирован: " + r.username)}, "Копировать контакт"));
+    a.append(h("button", {class:"bad", onclick:() => confirm("Удалить заявку?") && act("delete_request", {p_id:r.id}, c)}, "Удалить"));
+    c.append(a); return c;
+  };
+  const fill = () => {
+    btns.forEach(b => b.textContent = `${ST[b.dataset.k]} (${data.filter(r => r.status === b.dataset.k).length})`);
+    const rows = data.filter(r => r.status === rf && (!q || `${r.nickname} ${r.achievement} ${r.username}`.toLowerCase().includes(q))).sort((a, b) => !!b.reward - !!a.reward);
+    list.classList.toggle("still", !first);
+    list.replaceChildren(...(rows.length ? rows.map(card) : [h("p", {class:"empty"}, "Здесь пока пусто.")]));
+    first = false;
+  };
+  const load = async manual => {
+    if (!manual && list.querySelector(".tr")) return;
+    const { data: d, error } = await db.from("requests").select("*").order("created_at", {ascending:false}).limit(200);
+    if (error) { if (manual) toast("Не удалось загрузить заявки.", 1); return; }
+    const n = d.filter(r => r.status === "new").length;
+    if (lastNew !== null && n > lastNew) toast("Новая заявка!");
+    lastNew = n; document.title = (n ? `(${n}) ` : "") + TITLE;
+    data = d; if (manual) first = true; fill();
+  };
+  const sq = h("input", {class:"sq", placeholder:"Поиск: ник, достижение, юзернейм…", "aria-label":"Поиск по заявкам", oninput:e => { q = e.target.value.trim().toLowerCase(); fill(); }});
+  box.append(chips, sq, list);
+  await load(true);
+  timer = setInterval(() => load(), 15000);
+}
+async function tabProfile(box) {
+  let uid = me.id;
+  const out = h("div");
+  const draw = async () => {
+    const [{ data: s }, { data: rv }] = await Promise.all([db.rpc("staff_stats", {p_uid:uid}), db.from("reviews").select("id,stars,comment,created_at").eq("staff_id", uid).order("created_at", {ascending:false}).limit(10)]);
+    const cells = [["Сегодня", s.day], ["Неделя", s.week], ["Месяц", s.month], ["Всё время", s.total]].map(([l, n]) => { const sp = h("span", {}, "0"); count(sp, n); return h("div", {class:"stat"}, sp, l); });
+    out.replaceChildren(h("h2", {}, "Аналитика: закрытых заявок"), h("div", {class:"stats"}, cells),
+      h("h2", {}, "Отзывы"), s.avg ? h("div", {}, stars(s.avg), ` ${s.avg} из 5 · всего: ${s.reviews}`) : h("p", {class:"empty"}, "Отзывов пока нет."),
+      ...(rv || []).map(r => h("div", {class:"card closed"}, stars(r.stars), r.comment ? h("div", {}, r.comment) : null, h("div", {class:"meta"}, fmt(r.created_at)), me.role === "owner" ? h("div", {class:"acts"}, h("button", {class:"ghost", onclick:async () => { if (!confirm("Удалить отзыв?")) return; const { error } = await db.from("reviews").delete().eq("id", r.id); if (error) return toast("Не удалось удалить отзыв.", 1); toast("Отзыв удалён."); draw(); drawFoot(); }}, "Удалить отзыв")) : null)));
+  };
+  if (me.role === "owner") {
+    const sel = h("select", {onchange:e => { uid = e.target.value; draw(); }}, Object.values(profiles).map(p => h("option", {value:p.id}, `${p.nickname} · ${ROLE[p.role]}`)));
+    sel.value = me.id; box.append(fld("Сотрудник", sel));
+  }
+  const pw = h("input", {type:"password", placeholder:"Новый пароль, от 8 символов", autocomplete:"new-password"});
+  const pwBtn = h("button", {class:"ghost", onclick:async () => {
+    if (pw.value.length < 8) return toast("Пароль: минимум 8 символов.", 1);
+    pwBtn.disabled = true;
+    const { error } = await db.auth.updateUser({password:pw.value});
+    pwBtn.disabled = false;
+    if (error) return toast("Не удалось сменить пароль.", 1);
+    pw.value = ""; toast("Пароль изменён.");
+  }}, "Сменить пароль");
+  box.append(out, h("div", {class:"sep"}), h("h2", {style:"margin-top:0"}, "Аккаунт"), fld("Новый пароль", pw),
+    h("div", {class:"acts"}, pwBtn, h("button", {class:"ghost", onclick:async () => { await db.auth.signOut(); me = null; drawNav(); go("home"); }}, `Выйти (${me.nickname} · ${ROLE[me.role]})`)));
+  await draw();
+}
+async function tabStaff(box) {
+  const n = h("input", {placeholder:"ник: a-z, 0-9, _"}), p = h("input", {placeholder:"пароль от 8 символов"});
+  const r = h("select", {}, h("option", {value:"moderator"}, "Модератор"), h("option", {value:"admin"}, "Админ"));
+  const msg = h("div", {class:"msg"});
+  const b = h("button", {class:"go", onclick:async () => {
+    b.disabled = true; msg.className = "msg err"; msg.textContent = "";
+    const { error } = await db.functions.invoke("create-staff", {body:{nickname:n.value.trim().toLowerCase(), password:p.value, role:r.value}});
+    b.disabled = false;
+    if (error) { let t = "Не удалось создать аккаунт."; try { t = (await error.context.json()).error || t; } catch {} msg.textContent = t; return; }
+    toast("Аккаунт создан. Передай ник и пароль сотруднику."); await loadMe(); go("staff");
+  }}, "Создать аккаунт");
+  box.append(h("div", {class:"door"}, fld("Ник", n), fld("Пароль", p), fld("Роль", r), b, msg), h("h2", {}, "Команда"),
+    ...Object.values(profiles).map((x, i) => h("div", {class:"card closed", style:`--i:${i}`}, h("b", {}, x.nickname), h("div", {class:"meta"}, ROLE[x.role]))));
+}
+async function tabLog(box) {
+  const { data } = await db.from("action_log").select("*").order("created_at", {ascending:false}).limit(200);
+  const L = {start:"начал(а) работу", close:"закрыл(а)", delete:"удалил(а)", cancel:"отозвал(а) заявку", transfer:"передал(а) заявку", hold:"перевёл(а) в ожидание", resume:"вернул(а) в работу"};
+  const C = {start:"in_progress", close:"closed", delete:"new", cancel:"new", transfer:"in_progress", hold:"waiting", resume:"in_progress"};
+  box.append(...(data?.length ? data.map((x, i) => h("div", {class:"card " + (C[x.action] || ""), style:`--i:${Math.min(i, 12)}`},
+    h("b", {}, `${x.action === "cancel" ? "Посетитель" : profiles[x.staff_id]?.nickname || "удалённый аккаунт"} ${L[x.action] || x.action}`), h("div", {}, x.summary), h("div", {class:"meta"}, fmt(x.created_at)))) : [h("p", {class:"empty"}, "Журнал пуст.")]));
+}
+async function tabAch(box) {
+  const ta = h("textarea", {placeholder:"По одному достижению в строке", style:"min-height:140px"});
+  const list = h("div");
+  const load = async () => {
+    const { data } = await db.from("achievements").select("*").order("name");
+    list.replaceChildren(h("h2", {}, `Список достижений (${data?.length || 0})`), ...(data || []).map(a => h("div", {class:"card closed", style:"display:flex;justify-content:space-between;align-items:center;padding:4px 12px"},
+      a.name, h("button", {class:"ghost", onclick:async () => { await db.from("achievements").delete().eq("id", a.id); load(); }}, "×"))));
+  };
+  const preset = h("button", {class:"ghost preset", onclick:async () => {
+    preset.disabled = true;
+    const { data: oldRows, error: readError } = await db.from("achievements").select("id");
+    if (readError) {
+      preset.disabled = false;
+      return toast("Не удалось обновить список.", 1);
+    }
+    if (oldRows?.length) {
+      const { error: delError } = await db.from("achievements").delete().in("id", oldRows.map(x => x.id));
+      if (delError) {
+        preset.disabled = false;
+        return toast("Не удалось очистить старый список.", 1);
+      }
+    }
+    const { error } = await db.from("achievements").insert(Object.keys(CAT).map(name => ({name})));
+    preset.disabled = false;
+    if (error) return toast("Не удалось загрузить список.", 1);
+    toast(`Актуальный список загружен: ${Object.keys(CAT).length}`);
+    load();
+  }}, `Загрузить актуальный список (${Object.keys(CAT).length})`);
+  box.append(h("div", {class:"door"}, fld("Добавить достижения", ta), h("button", {class:"go", onclick:async () => {
+    const rows = [...new Set(ta.value.split("\n").map(s => s.trim()).filter(Boolean))].map(name => ({name}));
+    if (!rows.length) return;
+    const { error } = await db.from("achievements").upsert(rows, {onConflict:"name", ignoreDuplicates:true});
+    if (error) return toast("Не удалось добавить.", 1);
+    ta.value = ""; toast("Добавлено."); load();
+  }}, "Добавить"), h("div", {}, preset)), list);
+  load();
+}
+
+const setHH = () => {
+  const s = document.documentElement.style;
+  s.setProperty("--hh", document.querySelector("header").offsetHeight + "px");
+  s.setProperty("--nh", $("nav").offsetHeight + "px");
+};
+const ro = new ResizeObserver(setHH); ro.observe(document.querySelector("header")); ro.observe($("nav")); setHH();
+$("logo").onclick = () => go("home");
+try { const m = location.hash.match(/^#t=([0-9a-f-]{36})$/i); if (m) { if (!toks().includes(m[1])) saveToks([...toks(), m[1]]); history.replaceState(null, "", location.pathname + location.search); } } catch {}
+(async () => {
+  try { await loadMe(); } catch (e) { console.error(e); me = null; }
+  drawNav(); drawFoot().catch(() => {});
+  try { await go(me ? "staff" : "home"); }
+  catch (e) { console.error(e); $("app").replaceChildren(h("div", {class:"view"}, h("h1", {}, "Ошибка"), h("p", {class:"sub"}, "Не удалось загрузить страницу. Обнови её и попробуй снова."), h("button", {onclick:() => location.reload()}, "Обновить"))); }
+})();
+</script>
 </body>
 </html>
