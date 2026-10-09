@@ -250,21 +250,92 @@ async function team(box) {
 }
 
 /* ---------- вход ---------- */
+
 function login(box) {
-  const n = h("input", {autocomplete:"username"}), p = h("input", {type:"password", autocomplete:"current-password"}), msg = h("div", {class:"msg err"});
+  const n = h("input", {
+    autocomplete: "username",
+    placeholder: "Ник"
+  });
+  const p = h("input", {
+    type: "password",
+    autocomplete: "current-password",
+    placeholder: "Пароль"
+  });
+  const msg = h("div", {
+    class: "msg err",
+    role: "alert",
+    "aria-live": "polite"
+  });
+  const btn = h("button", { class: "go" }, "Войти");
+
   const submit = async () => {
+    if (btn.disabled) return;
+
     msg.textContent = "";
-    const nk = n.value.trim().toLowerCase();
-    if (!/^[a-z0-9_]{3,20}$/.test(nk)) { msg.textContent = "Неверный ник или пароль."; return; }
-    const { error } = await db.auth.signInWithPassword({email:nk + "@dorsotic.app", password:p.value});
-    if (error) { msg.textContent = "Неверный ник или пароль."; return; }
-    await loadMe();
-    if (!me) { msg.textContent = "У этого аккаунта нет доступа."; return; }
-    drawNav(); go("staff");
+    btn.disabled = true;
+    btn.textContent = "Входим…";
+
+    try {
+      const nk = n.value.trim().toLowerCase();
+
+      if (!/^[a-z0-9_]{3,20}$/.test(nk)) {
+        msg.textContent = "Неверный ник или пароль.";
+        return;
+      }
+
+      const { error } = await db.auth.signInWithPassword({
+        email: nk + "@dorsotic.app",
+        password: p.value
+      });
+
+      if (error) {
+        console.error("Login error:", error);
+        msg.textContent = "Неверный ник или пароль.";
+        return;
+      }
+
+      await loadMe();
+
+      if (!me) {
+        msg.textContent = "У этого аккаунта нет доступа.";
+        return;
+      }
+
+      drawNav();
+      await go("staff");
+    } catch (e) {
+      console.error("Sign-in error:", e);
+      msg.textContent = e?.message
+        ? "Ошибка входа: " + e.message
+        : "Не удалось войти. Проверь подключение и попробуй ещё раз.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Войти";
+    }
   };
-  p.onkeydown = e => { if (e.key === "Enter") submit(); };
-  box.append(h("h1", {}, "Вход для персонала"), h("p", {class:"sub"}, "Хочешь стать помощником? Напиши владельцу в Telegram."), h("div", {class:"door"}, fld("Ник", n), fld("Пароль", p), h("button", {class:"go", onclick:submit}, "Войти"), msg));
+
+  btn.onclick = submit;
+  p.onkeydown = e => {
+    if (e.key === "Enter") submit();
+  };
+  n.onkeydown = e => {
+    if (e.key === "Enter") submit();
+  };
+
+  box.append(
+    h("h1", {}, "Вход для персонала"),
+    h("p", { class: "sub" },
+      "Хочешь стать помощником? Напиши владельцу в Telegram."
+    ),
+    h("div", { class: "door" },
+      fld("Ник", n),
+      fld("Пароль", p),
+      btn,
+      msg
+    )
+  );
 }
+
 
 /* ---------- панель ---------- */
 async function staffView(box) {
