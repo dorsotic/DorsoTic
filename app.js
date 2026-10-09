@@ -52,15 +52,50 @@ if (typeof supabase === "undefined") {
 }
 const db = supabase.createClient(SB_URL, SB_KEY);
 let me = null, profiles = {}, tab = "requests", rf = "new", msub = "team", timer = null, lastNew = null;
-
 async function loadMe() {
-  const { data: { user } } = await db.auth.getUser();
-  me = null; if (!user) return;
-  const { data } = await db.from("profiles").select("*").eq("id", user.id).maybeSingle();
-  if (!data) { await db.auth.signOut(); return; }
+  me = null;
+
+  const { data: authData, error: authError } =
+    await db.auth.getUser();
+
+  if (authError) {
+    console.error("Auth error:", authError);
+    throw new Error("Ошибка авторизации: " + authError.message);
+  }
+
+  const user = authData?.user;
+  if (!user) return null;
+
+  const { data, error } = await db
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Profile error:", error);
+    throw new Error("Ошибка загрузки профиля: " + error.message);
+  }
+
+  if (!data) {
+    throw new Error("Профиль не найден для ID: " + user.id);
+  }
+
   me = data;
-  const r = await db.from("profiles").select("id,nickname,role");
-  profiles = Object.fromEntries((r.data || []).map(p => [p.id, p]));
+
+  const { data: list, error: listError } = await db
+    .from("profiles")
+    .select("id,nickname,role");
+  
+  if (listError) {
+    console.error("Profiles list error:", listError);
+    profiles = { [data.id]: data };
+  } else {
+    profiles = Object.fromEntries(
+      (list || []).map(p => [p.id, p])
+    );
+  }
+  return me;
 }
 function drawNav() {
   const nb = (v, ic, l) => h("button", {"data-v":v, onclick:() => go(v)}, h("span", {"aria-hidden":"true"}, ic), h("span", {}, l));
