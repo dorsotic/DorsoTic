@@ -90,7 +90,7 @@ const ICONS = {
   camera:'<svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>'
 };
 const ic = n => { const s = h("span", {class:"ico"}); s.innerHTML = ICONS[n]; return s; };
-const AV_RE = /^[0-9a-f-]{36}\/a_[0-9a-f-]{36}\.jpg$/, MY = "id,username,display_name,bio,avatar_path,banned,created_at,notif_seen_at";
+const AV_RE = /^[0-9a-f-]{36}\/a_[0-9a-f-]{36}\.jpg$/, BN_RE = /^[0-9a-f-]{36}\/b_[0-9a-f-]{36}\.jpg$/, MY = "id,username,display_name,bio,avatar_path,banner_path,banned,created_at,notif_seen_at";
 const pubUrl = p => db.storage.from("forum").getPublicUrl(p).data.publicUrl;
 const nameOf = pr => pr?.display_name || pr?.username || "?";
 let fcur = () => {}, fdraft = {}, fnTimer = 0;
@@ -102,19 +102,25 @@ function avatar(pr, cls = "") {
   if (AV_RE.test(pr?.avatar_path || "")) { const i = h("img", {src:pubUrl(pr.avatar_path), alt:"", loading:"lazy"}); i.onerror = ini; d.append(i); } else ini();
   return d;
 }
-async function cropAvatar(file) {
+async function cropImg(file, W, H, q) {
   if (!/^image\/(jpeg|png|webp)$/.test(file.type)) throw bad("Только jpg, png или webp.");
   if (file.size > 8 * 1048576) throw bad("Файл слишком большой (до 8 МБ).");
   let bmp; try { bmp = await createImageBitmap(file); } catch { throw bad("Не удалось открыть картинку."); }
-  const s = Math.min(bmp.width, bmp.height), c = document.createElement("canvas"); c.width = c.height = 320;
-  c.getContext("2d").drawImage(bmp, (bmp.width - s) / 2, (bmp.height - s) / 2, s, s, 0, 0, 320, 320);
-  const b = await new Promise(r => c.toBlob(r, "image/jpeg", .86)); if (!b) throw bad("Не удалось обработать картинку."); return b;
+  const k = Math.min(bmp.width / W, bmp.height / H), sw = W * k, sh = H * k, c = document.createElement("canvas"); c.width = W; c.height = H;
+  c.getContext("2d").drawImage(bmp, (bmp.width - sw) / 2, (bmp.height - sh) / 2, sw, sh, 0, 0, W, H);
+  const b = await new Promise(r => c.toBlob(r, "image/jpeg", q)); if (!b) throw bad("Не удалось обработать картинку."); return b;
+}
+const cropAvatar = f => cropImg(f, 320, 320, .86), cropBanner = f => cropImg(f, 1200, 400, .82);
+function banner(pr, cls = "") {
+  const d = h("div", {class:"cover " + cls});
+  if (BN_RE.test(pr?.banner_path || "")) { const i = h("img", {src:pubUrl(pr.banner_path), alt:"", loading:"lazy"}); i.onerror = () => { d.classList.remove("has"); i.remove(); }; d.classList.add("has"); d.append(i); }
+  return d;
 }
 
 /* ---------- редактирование профиля ---------- */
 function editProfile(mine, done) {
-  const bd = h("div", {class:"sheet-bd"}); let blob = null, url = null;
-  const close = () => { if (url) URL.revokeObjectURL(url); document.removeEventListener("keydown", esc); bd.remove(); };
+  const bd = h("div", {class:"sheet-bd"}); let blob = null, url = null, bnBlob = null, bnUrl = null, bnDel = false;
+  const close = () => { if (url) URL.revokeObjectURL(url); if (bnUrl) URL.revokeObjectURL(bnUrl); document.removeEventListener("keydown", esc); bd.remove(); };
   const esc = e => { if (e.key === "Escape") close(); };
   const msg = h("div", {class:"msg err", role:"alert"});
   const dn = h("input", {maxlength:30, placeholder:"Имя, как тебя видят", value:mine.display_name || ""});
@@ -127,17 +133,31 @@ function editProfile(mine, done) {
     try { blob = await cropAvatar(f); if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(blob); avBtn.querySelector(".av").replaceChildren(h("img", {src:url, alt:""})); msg.textContent = ""; }
     catch (e) { msg.textContent = fe(e, "Не удалось открыть картинку."); }
   };
+  const bnFile = h("input", {type:"file", accept:"image/jpeg,image/png,image/webp", style:"display:none"});
+  const bnPrev = banner(mine), paintBn = () => bnPrev.classList.contains("has") || bnPrev.classList.add("empty");
+  const bnBtn = h("button", {class:"bnedit", type:"button", "aria-label":"Сменить баннер", onclick:() => bnFile.click()}, bnPrev, h("span", {class:"cam"}, ic("camera")));
+  const bnRm = h("button", {class:"ghost bnrm", type:"button", onclick:() => { bnBlob = null; bnDel = true; if (bnUrl) { URL.revokeObjectURL(bnUrl); bnUrl = null; } bnPrev.replaceChildren(); bnPrev.classList.remove("has"); bnRm.hidden = true; }}, "Убрать баннер");
+  bnRm.hidden = !BN_RE.test(mine.banner_path || "");
+  bnFile.onchange = async () => {
+    const f = bnFile.files[0]; if (!f) return;
+    try { bnBlob = await cropBanner(f); bnDel = false; if (bnUrl) URL.revokeObjectURL(bnUrl); bnUrl = URL.createObjectURL(bnBlob); bnPrev.replaceChildren(h("img", {src:bnUrl, alt:""})); bnPrev.classList.add("has"); bnRm.hidden = false; msg.textContent = ""; }
+    catch (e) { msg.textContent = fe(e, "Не удалось открыть картинку."); }
+    bnFile.value = "";
+  };
   const save = h("button", {class:"go pub", type:"button"}, "Сохранить");
   save.onclick = async () => {
     msg.textContent = ""; const u = un.value.trim().toLowerCase().replace(/^@/, "");
     if (!/^[a-z0-9_]{3,20}$/.test(u)) return void (msg.textContent = "Юзернейм: a-z, 0-9, _, от 3 до 20 символов.");
-    save.disabled = true; let path = null;
+    save.disabled = true; let path = null, bnPath = null;
     try {
       if (blob) { path = `${fu.id}/a_${crypto.randomUUID()}.jpg`; const { error } = await db.storage.from("forum").upload(path, blob, {contentType:"image/jpeg", upsert:false}); if (error) { path = null; throw error; } }
+      if (bnBlob) { bnPath = `${fu.id}/b_${crypto.randomUUID()}.jpg`; const { error } = await db.storage.from("forum").upload(bnPath, bnBlob, {contentType:"image/jpeg", upsert:false}); if (error) { bnPath = null; throw error; } }
       const upd = {username:u, display_name:dn.value.trim() || null, bio:bio.value.trim() || null}; if (path) upd.avatar_path = path;
+      if (bnPath) upd.banner_path = bnPath; else if (bnDel) upd.banner_path = null;
       const { error } = await db.from("forum_profiles").update(upd).eq("id", fu.id);
-      if (error) { if (path) await db.storage.from("forum").remove([path]); throw error; }
+      if (error) { const bad = [path, bnPath].filter(Boolean); if (bad.length) await db.storage.from("forum").remove(bad); throw error; }
       if (path && AV_RE.test(mine.avatar_path || "")) await db.storage.from("forum").remove([mine.avatar_path]);
+      if ((bnPath || bnDel) && BN_RE.test(mine.banner_path || "")) await db.storage.from("forum").remove([mine.banner_path]);
       close(); toast("Профиль сохранён."); done();
     } catch (e) { msg.textContent = e?.code === "23505" ? "Этот юзернейм занят." : fe(e, "Не получилось сохранить."); save.disabled = false; }
   };
@@ -145,7 +165,8 @@ function editProfile(mine, done) {
   document.addEventListener("keydown", esc);
   bd.append(h("div", {class:"sheet", role:"dialog", "aria-label":"Редактирование профиля"}, h("div", {class:"grab"}),
     h("div", {class:"sh-top"}, h("button", {class:"ib", type:"button", "aria-label":"Закрыть", onclick:close}, ic("close")), save),
-    h("div", {style:"display:flex;justify-content:center"}, avBtn), file,
+    h("div", {class:"bnwrap"}, bnBtn, bnRm), bnFile,
+    h("div", {style:"display:flex;justify-content:center;margin-top:-2.6rem;position:relative"}, avBtn), file,
     fld("Имя", dn), fld("Юзернейм (a-z, 0-9, _)", un), fld("О себе", bio), msg));
   document.body.append(bd);
 }
@@ -339,7 +360,7 @@ async function forum(box) {
       ptabs.replaceChildren(...[["posts", "Посты"], ["replies", "Ответы"]].map(([k, l]) => h("button", {type:"button", class:ptab === k ? "on" : "", onclick:() => { ptab = k; loadTab(); }}, l)));
       lst.replaceChildren(withMore(C, q => ptab === "posts" ? q.eq("author", id).is("parent_id", null) : q.eq("author", id).not("parent_id", "is", null), ptab === "posts" ? "Пока нет постов." : "Пока нет ответов."));
     };
-    const parts = [h("div", {class:"pcard"}, h("div", {class:"cover"}), h("div", {class:"phead"}, avatar(pr, "lg"), act),
+    const parts = [h("div", {class:"pcard"}, banner(pr), h("div", {class:"phead"}, avatar(pr, "lg"), act),
       h("div", {class:"pinfo"}, h("h2", {}, nameOf(pr), role ? h("span", {class:"badge"}, ROLE[role] || role) : null), h("div", {class:"meta"}, "@" + pr.username),
         pr.bio ? h("div", {class:"pbio"}, pr.bio) : null, h("div", {class:"meta", style:"margin-top:.4rem"}, "На форуме с " + new Date(pr.created_at).toLocaleDateString("ru-RU", {month:"long", year:"numeric"})), stats))];
     if (self) {
@@ -399,3 +420,5 @@ async function forum(box) {
   else if (k === "s") view(showSearch);
   else { tab = k === "sub" ? "sub" : "all"; showFeed(); }
 }
+
+{ const v = document.getElementById("ver"); if (v) v.textContent = "DorsoTic v" + SITE_VERSION; }
