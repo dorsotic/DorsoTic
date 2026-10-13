@@ -172,6 +172,8 @@ footer{border-top-color:rgba(255,255,255,.06)}
 .avbtn{flex:none;padding:0;min-height:0;border:0;background:none;box-shadow:none;border-radius:50%}
 .pcard{border-bottom:1px solid var(--line);animation:fadeIn .4s ease both}
 .cover{height:6.8rem;background:radial-gradient(120% 140% at 15% 0%,rgba(229,189,112,.5),transparent 60%),radial-gradient(100% 140% at 92% 10%,rgba(60,120,190,.42),transparent 60%),#15171e}
+.cover{position:relative;overflow:hidden}.cover img{display:block;width:100%;height:100%;object-fit:cover}.cover.has{height:auto;aspect-ratio:3/1;max-height:11.5rem;min-height:6.8rem}
+.bnwrap{position:relative;border-radius:16px;overflow:hidden}.bnedit{position:relative;display:block;width:100%;padding:0;min-height:0;border:0;background:none;box-shadow:none;border-radius:16px;overflow:hidden}.bnedit .cover{height:auto;aspect-ratio:3/1;min-height:5rem;border-radius:16px}.bnedit .cam{position:absolute;right:.5rem;top:.5rem;display:grid;place-items:center;width:1.9rem;height:1.9rem;border-radius:50%;background:rgba(0,0,0,.55);color:#fff}.bnedit .cam .ico{width:1rem;height:1rem}.bnrm{position:absolute;left:.5rem;top:.5rem;min-height:0;padding:.25rem .65rem;font-size:.78rem;background:rgba(0,0,0,.55)}.bnrm[hidden]{display:none}
 .phead{display:flex;align-items:flex-end;justify-content:space-between;padding:0 .85rem;margin-top:-2.8rem}
 .pa{display:flex;gap:.4rem;padding-bottom:.3rem}.phead>.fbtn{margin-bottom:.3rem}
 .pinfo{padding:.55rem .85rem .9rem}.pinfo h2{display:flex;align-items:center;gap:.5rem;margin:0;font-size:1.3rem}
@@ -202,7 +204,8 @@ footer{border-top-color:rgba(255,255,255,.06)}
 <header><div class="logo" id="logo">DorsoTic</div><div class="head-tools"><div class="rate" id="rate"></div></div></header>
 <main id="app"></main>
 <footer><div id="fr"></div><div id="fl"></div>
-<div class="meta" style="max-width:34rem;margin:.6rem auto 0">Неофициальный сервис. Не связан с Roblox Corporation и Lightning Bolt Studios (DOORS). Мы храним ник Roblox, юзернейм мессенджера и текст заявки только для её выполнения; через 30 дней после закрытия заявка обезличивается.</div></footer>
+<div class="meta" style="max-width:34rem;margin:.6rem auto 0">Неофициальный сервис. Не связан с Roblox Corporation и Lightning Bolt Studios (DOORS). Мы храним ник Roblox, юзернейм мессенджера и текст заявки только для её выполнения; через 30 дней после закрытия заявка обезличивается.</div>
+<div class="meta" id="ver" style="max-width:34rem;margin:.4rem auto 0;opacity:.6"></div></footer>
 <nav id="nav" aria-label="Меню"></nav>
 <noscript><p style="text-align:center;padding:2rem">Для работы сайта нужен JavaScript.</p></noscript>
 <script src="app.js"></script>
