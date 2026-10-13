@@ -1,0 +1,36 @@
+/* Доработки под телефон / приложение. Подключается после основного <style>. */
+html{-webkit-tap-highlight-color:transparent}
+body{overscroll-behavior-y:none}
+button,a,summary,nav button,.tw-row,.pk-i,.avlink,.nmlink{touch-action:manipulation}
+nav,nav button,.ftabs button,.tabs button,button{-webkit-user-select:none;user-select:none}
+
+/* крупнее зоны нажатия */
+.ib{min-height:2.6rem;min-width:2.6rem;justify-content:center}
+nav button{min-height:2.8rem}
+.ftabs button{min-height:2.5rem}
+.fbtn{min-height:2.6rem}
+
+/* на сенсорных экранах нет «наведения»: убираем залипающие подсветки */
+@media (hover:none){
+  .tw-row:hover{background:none}
+  .ib:hover{background:none;color:var(--muted)}
+  .ib.on:hover{color:#f0647e}
+  .avlink:hover{transform:none;box-shadow:none}
+  .tw-main img:hover{filter:none}
+  button:hover{filter:none;box-shadow:none}
+}
+
+/* отступы под нижнюю панель жестов и под клавиатуру */
+.toast{bottom:calc(5.2rem + env(safe-area-inset-bottom))}
+footer{padding-bottom:calc(5.5rem + env(safe-area-inset-bottom))}
+.sheet{padding-bottom:calc(1rem + env(safe-area-inset-bottom))}
+.sheet textarea{scroll-margin-bottom:6rem}
+
+/* текст выделяется только там, где его нужно копировать */
+.tw-txt,.pbio,.note,input,textarea{-webkit-user-select:text;user-select:text}
+
+@media (max-width:600px){
+  main{padding-left:max(.6rem,env(safe-area-inset-left));padding-right:max(.6rem,env(safe-area-inset-right))}
+  #fbar button{min-height:3.2rem}
+  .go{min-height:3rem}
+}
