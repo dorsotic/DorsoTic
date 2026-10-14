@@ -159,7 +159,7 @@ function editProfile(mine, done) {
       if (path && AV_RE.test(mine.avatar_path || "")) await db.storage.from("forum").remove([mine.avatar_path]);
       if ((bnPath || bnDel) && BN_RE.test(mine.banner_path || "")) await db.storage.from("forum").remove([mine.banner_path]);
       close(); toast("Профиль сохранён."); done();
-    } catch (e) { msg.textContent = e?.code === "23505" ? "Этот юзернейм занят." : fe(e, "Не получилось сохранить."); save.disabled = false; }
+    } catch (e) { msg.textContent = e?.code === "23505" ? "Этот юзернейм занят." : fe(e, "Не получилось сохранить.") + (e?.message ? ` [${e.code || e.statusCode || "err"}: ${e.message}]` : ""); console.error("profile save", e); save.disabled = false; }
   };
   bd.onclick = e => { if (e.target === bd) close(); };
   document.addEventListener("keydown", esc);
