@@ -225,8 +225,9 @@ function postCard(p, liked, c) {
     e.stopPropagation(); if (await modal({title:"Удалить?", text:"Вместе со всеми ответами. Это нельзя отменить.", ok:"Удалить"}) === null) return;
     const { data: rs } = await db.from("posts").select("image_path").eq("parent_id", p.id);
     const paths = [p.image_path, ...(rs || []).map(r => r.image_path)].filter(x => x && IMG_RE.test(x));
+    const { data: del, error } = await db.from("posts").delete().eq("id", p.id).select("id");
+    if (error || !del?.length) { console.error("post delete", error); return toast("Не удалось удалить: нет прав или пост уже удалён.", 1); }
     if (paths.length) await db.storage.from("forum").remove(paths);
-    const { error } = await db.from("posts").delete().eq("id", p.id); if (error) return toast("Не удалось удалить.", 1);
     fRefresh(); c.after();
   }}, ic("trash")));
   if (me && me.role !== "moderator" && p.author !== fu?.id) act.append(h("button", {class:"ib del", type:"button", "aria-label":"Заблокировать автора", onclick:async e => {
