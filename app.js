@@ -7,7 +7,7 @@ const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Вла�
 const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
 const PL = {discord:"Discord", telegram:"Telegram"};
 let FPATH = "";
-const ROUTES = ["home", "info", "team", "forum", "staff", "login"];
+const ROUTES = ["home", "info", "team", "forum", "update", "staff", "login"];
 const WARN = "Перед тем как отправить заявку, убедитесь, что вы выбрали достижение, которое нужно. Просим вас не выбирать случайное достижение и не писать в комментарии о другом, которого нет в списке. Если вы так поступите, ваша заявка будет удалена.";
 
 const $ = id => document.getElementById(id);
@@ -99,7 +99,7 @@ async function loadMe() {
 }
 function drawNav() {
   const nb = (v, ic, l) => h("button", {"data-v":v, onclick:() => go(v)}, h("span", {"aria-hidden":"true"}, ic), h("span", {}, l));
-  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("info", "?", "Инфо"), nb("team", "★", "Помощники"), nb("forum", "☰", "Форум"), ...(me ? [nb("staff", "☺", "Панель")] : []));
+  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("info", "?", "Инфо"), nb("team", "★", "Помощники"), nb("forum", "☰", "Форум"), nb("update", "◷", "Обновление"), ...(me ? [nb("staff", "☺", "Панель")] : []));
   $("fl").replaceChildren(...(me ? [] : [h("a", {href:"#login", class:"lk", onclick:e => { e.preventDefault(); go("login"); }}, "Вход для персонала")]));
 }
 async function drawFoot() {
@@ -121,9 +121,41 @@ async function go(v) {
   window.scrollTo(0, 0); clearInterval(timer); document.title = TITLE;
   try {
     if (v === "home") await home(box); else if (v === "login") login(box); else if (v === "info") how(box);
-    else if (v === "team") await team(box); else if (v === "forum") await forum(box);
+    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box);
     else await staffView(box);
   } catch (e) { console.error(e); box.replaceChildren(h("h1", {}, "Ошибка"), h("p", {class:"sub"}, "Не удалось загрузить страницу. Обнови её.")); }
+}
+
+
+/* ---------- обновление: The Candy Vault ---------- */
+const CV = {start:"2026-10-22T21:00:00+03:00", end:"2026-11-09T07:55:00+03:00"}; // время МСК (UTC+3)
+function updateView(box) {
+  const t0 = Date.parse(CV.start), t1 = Date.parse(CV.end);
+  const nums = ["дней", "часов", "минут", "секунд"].map(l => { const n = h("span", {}, "00"); return {n, el:h("div", {class:"stat"}, n, l)}; });
+  const cap = h("div", {class:"sub", style:"margin:.2rem 0 0"}), state = h("div", {class:"warning-caption", style:"margin-top:.9rem"});
+  const when = d => new Date(d).toLocaleString("ru-RU", {dateStyle:"long", timeStyle:"short"});
+  const tick = () => {
+    const now = Date.now(); let left, st, c;
+    if (now < t0) { left = t0 - now; st = "До начала обновления"; c = "Старт: " + when(t0); }
+    else if (now < t1) { left = t1 - now; st = "Обновление уже идёт!"; c = "Событие закончится: " + when(t1); }
+    else { left = 0; st = "Событие завершилось"; c = "Закончилось: " + when(t1); }
+    const s = Math.floor(left / 1000), v = [Math.floor(s / 86400), Math.floor(s % 86400 / 3600), Math.floor(s % 3600 / 60), s % 60];
+    nums.forEach((x, i) => x.n.textContent = String(v[i]).padStart(2, "0"));
+    state.textContent = st; cap.textContent = c;
+  };
+  tick(); clearInterval(timer); timer = setInterval(tick, 1000);
+  document.title = "The Candy Vault — " + TITLE;
+  box.append(
+    h("h1", {}, "The Candy Vault"),
+    h("p", {class:"sub"}, "Новое обновление DOORS"),
+    h("div", {class:"door cv"},
+      h("img", {src:"candy-vault.webp", alt:"The Candy Vault — DOORS", width:"768", height:"432", class:"cv-img"}),
+      state,
+      h("div", {class:"stats cd"}, nums.map(x => x.el)),
+      cap,
+      h("p", {class:"meta", style:"text-align:center;margin-top:.7rem"}, "Подробности скоро…")
+    )
+  );
 }
 
 /* ---------- выбор достижений ---------- */
@@ -280,231 +312,4 @@ function login(box) {
     try {
       const nk = n.value.trim().toLowerCase();
 
-      if (!/^[a-z0-9_]{3,20}$/.test(nk)) {
-        msg.textContent = "Неверный ник или пароль.";
-        return;
-      }
-
-      const { error } = await db.auth.signInWithPassword({
-        email: nk + "@dorsotic.app",
-        password: p.value
-      });
-
-      if (error) {
-        console.error("Login error:", error);
-        msg.textContent = "Неверный ник или пароль.";
-        return;
-      }
-
-      await loadMe();
-
-      if (!me) {
-        msg.textContent = "У этого аккаунта нет доступа.";
-        return;
-      }
-
-      drawNav();
-      await go("staff");
-    } catch (e) {
-      console.error("Sign-in error:", e);
-      msg.textContent = e?.message
-        ? "Ошибка входа: " + e.message
-        : "Не удалось войти. Проверь подключение и попробуй ещё раз.";
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Войти";
-    }
-  };
-
-  btn.onclick = submit;
-  p.onkeydown = e => {
-    if (e.key === "Enter") submit();
-  };
-  n.onkeydown = e => {
-    if (e.key === "Enter") submit();
-  };
-
-  box.append(
-    h("h1", {}, "Вход для персонала"),
-    h("p", { class: "sub" },
-      "Хочешь стать помощником? Напиши владельцу в Telegram."
-    ),
-    h("div", { class: "door" },
-      fld("Ник", n),
-      fld("Пароль", p),
-      btn,
-      msg
-    )
-  );
-}
-
-
-/* ---------- панель ---------- */
-async function staffView(box) {
-  const T = [["requests", "Заявки", tabRequests], ["profile", "Профиль", tabProfile]];
-  if (me.role === "owner") T.push(["ach", "Ачивки", tabAch]);
-  if (me.role !== "moderator") T.push(["manage", "Управление", tabManage]);
-  if (!T.some(t => t[0] === tab)) tab = "requests";
-  const pane = h("div");
-  const draw = async () => { clearInterval(timer); const p = h("div"); pane.replaceChildren(p); await T.find(t => t[0] === tab)[2](p); };
-  const tabs = h("div", {class:"tabs"}, T.map(([k, l]) => h("button", {class:k === tab ? "on" : "", onclick:e => { tab = k; [...tabs.children].forEach(b => b.classList.remove("on")); e.currentTarget.classList.add("on"); draw(); }}, l)));
-  box.append(tabs, pane); await draw();
-}
-async function tabRequests(box) {
-  let data = [], notes = {}, closedN = 0, q = "", first = true;
-  const list = h("div", {class:"grid"}), chips = h("div", {class:"tabs"});
-  const sq = h("input", {placeholder:"Поиск: ник, достижение, юзернейм…", "aria-label":"Поиск", oninput:e => { q = e.target.value.trim().toLowerCase(); fill(); }});
-  const btns = Object.keys(ST).map(k => { const b = h("button", {class:k === rf ? "on" : "", onclick:() => { rf = k; btns.forEach(x => x.classList.toggle("on", x === b)); fill(); }}); b.dataset.k = k; return b; });
-  chips.append(...btns, h("button", {class:"ghost", title:"Обновить", style:"margin-left:auto", onclick:() => load(true)}, "⟳"));
-  const act = async (fn, args, okMsg) => { const { error } = await db.rpc(fn, args); if (error) return toast(error.message, 1); if (okMsg) toast(okMsg); load(true); };
-  const card = r => {
-    const id = String(r.id), can = r.taken_by === me.id || me.role !== "moderator";
-    const left = r.status === "waiting" ? Math.round((new Date(r.held_at || r.created_at).getTime() + 3 * 864e5 - Date.now()) / 36e5) : null;
-    const c = h("div", {class:"card " + r.status},
-      h("b", {}, r.achievement.split("; ").join(" · ")), h("div", {}, `${r.nickname} · ${PL[r.platform]} ${r.username}`),
-      r.reward ? h("div", {class:"gift"}, "Награда: " + r.reward) : null, r.note ? h("div", {}, r.note) : null,
-      r.hold_note ? h("div", {class:"meta"}, "Ожидание: " + r.hold_note) : null,
-      left !== null ? h("div", {class:"meta warn"}, left <= 0 ? "Скоро будет удалена автоматически" : `Автоудаление через ${left < 48 ? left + " ч" : Math.ceil(left / 24) + " дн"}`) : null,
-      ...(notes[id] || []).map(n => h("div", {class:"note"}, `✎ ${profiles[n.staff_id]?.nickname || "?"}: ${n.text}`)),
-      h("div", {class:"meta"}, h("span", {class:"pill " + r.status}, ST[r.status]), `${r.taken_by && profiles[r.taken_by] ? " " + profiles[r.taken_by].nickname + " ·" : ""} ${fmt(r.created_at)} · ${ago(r.created_at)} назад`));
-    const a = h("div", {class:"acts"});
-    if (r.status === "new") a.append(h("button", {onclick:() => act("start_request", {p_id:id})}, "Начать работу"));
-    if (r.status === "in_progress" && can) a.append(h("button", {onclick:() => act("close_request", {p_id:id})}, "Закрыть"), h("button", {class:"hold", onclick:async () => {
-      const t = await modal({title:"В ожидание", input:{max:120, ph:"Причина или до когда ждём (по желанию)"}, ok:"В ожидание"});
-      if (t !== null) act("hold_request", {p_id:id, p_note:t || null}, "Заявка переведена в ожидание.");
-    }}, "В ожидание"));
-    if (r.status === "waiting" && can) a.append(h("button", {onclick:() => act("resume_request", {p_id:id}, "Заявка снова в работе.")}, "Вернуть в работу"), h("button", {class:"ghost", onclick:() => act("close_request", {p_id:id})}, "Закрыть"));
-    if ((r.status === "in_progress" || r.status === "waiting") && can) a.append(h("button", {class:"ghost", onclick:async () => {
-      const sel = h("select", {}, h("option", {value:""}, "В общую очередь"), Object.values(profiles).filter(p => p.id !== me.id).map(p => h("option", {value:p.id}, `${p.nickname} (${ROLE[p.role]})`)));
-      const to = await modal({title:"Передать заявку", body:sel, ok:"Передать"});
-      if (to !== null) act("transfer_request", {p_id:id, p_to:to || null}, "Заявка передана.");
-    }}, "Передать"));
-    a.append(h("button", {class:"ghost", onclick:() => copy(r.username, "Контакт скопирован: " + r.username)}, "Контакт"),
-      h("button", {class:"ghost", onclick:async () => {
-        const t = await modal({title:"Заметка для персонала", input:{max:300, ph:"Видна только сотрудникам"}, ok:"Сохранить"});
-        if (!t) return;
-        const { error } = await db.rpc("add_note", {p_id:id, p_text:t}); if (error) return toast(error.message, 1); load(true);
-      }}, "Заметка"));
-    if (me.role !== "moderator") a.append(h("button", {class:"ghost", onclick:async () => {
-      if (await modal({title:"В чёрный список?", text:`Ник ${r.nickname} и юзернейм ${r.username} больше не смогут отправлять заявки.`, ok:"Добавить"}) === null) return;
-      const { error } = await db.rpc("add_blacklist", {p_id:id}); toast(error ? error.message : "Добавлено в чёрный список.", !!error);
-    }}, "В ЧС"));
-    a.append(h("button", {class:"bad", onclick:async () => { if (await modal({title:"Удалить заявку?", ok:"Удалить"}) !== null) act("delete_request", {p_id:id}); }}, "Удалить"));
-    c.append(a); return c;
-  };
-  const fill = () => {
-    btns.forEach(b => { const k = b.dataset.k; b.textContent = `${ST[k]} (${k === "closed" ? closedN : data.filter(r => r.status === k).length})`; });
-    const rows = data.filter(r => r.status === rf && (!q || `${r.nickname} ${r.achievement} ${r.username}`.toLowerCase().includes(q))).sort((a, b) => !!b.reward - !!a.reward);
-    list.replaceChildren(...(rows.length ? rows.map(card) : [h("p", {class:"empty"}, "Здесь пока пусто.")]));
-  };
-  const load = async manual => {
-    if (!manual && document.querySelector(".bd")) return;
-    const sel = "id,nickname,achievement,reward,platform,username,note,status,taken_by,held_at,hold_note,created_at";
-    const [a, b, n, c] = await Promise.all([
-      db.from("requests").select(sel).neq("status", "closed").order("created_at", {ascending:false}).limit(500),
-      db.from("requests").select(sel).eq("status", "closed").order("created_at", {ascending:false}).limit(50),
-      db.from("request_notes").select("request_id,staff_id,text").order("created_at").limit(1000),
-      db.from("requests").select("id", {count:"exact", head:true}).eq("status", "closed")]);
-    if (a.error || b.error) { if (manual) toast("Не удалось загрузить заявки.", 1); return; }
-    data = [...a.data, ...b.data]; closedN = c.count ?? b.data.length; notes = {};
-    (n.data || []).forEach(x => (notes[x.request_id] ||= []).push(x));
-    const cnt = a.data.filter(r => r.status === "new").length;
-    if (lastNew !== null && cnt > lastNew) toast("Новая заявка!");
-    lastNew = cnt; document.title = (cnt ? `(${cnt}) ` : "") + TITLE; fill();
-  };
-  box.append(chips, h("div", {}, sq), list); await load(true);
-  timer = setInterval(() => load(), 15000);
-}
-async function tabProfile(box) {
-  let uid = me.id; const out = h("div");
-  const draw = async () => {
-    const [{ data: s, error }, { data: rv }] = await Promise.all([db.rpc("staff_stats", {p_uid:uid}), db.from("reviews").select("id,stars,comment,created_at").eq("staff_id", uid).order("created_at", {ascending:false}).limit(10)]);
-    if (error || !s) { out.replaceChildren(h("p", {class:"empty"}, "Нет данных.")); return; }
-    const n = (l, v) => h("div", {class:"stat"}, h("span", {}, String(v)), l);
-    out.replaceChildren(h("h2", {}, "Закрытых заявок"), h("div", {class:"stats"}, n("Сегодня", s.day), n("Неделя", s.week), n("Месяц", s.month), n("Всё время", s.total)),
-      h("h2", {}, "Отзывы"), s.avg ? h("div", {}, stars(s.avg), ` ${s.avg} из 5 · всего: ${s.reviews}`) : h("p", {class:"empty"}, "Отзывов пока нет."),
-      ...(rv || []).map(r => h("div", {class:"card closed"}, stars(r.stars), r.comment ? h("div", {}, r.comment) : null, h("div", {class:"meta"}, fmt(r.created_at)),
-        me.role === "owner" ? h("div", {class:"acts"}, h("button", {class:"ghost", onclick:async () => {
-          if (await modal({title:"Удалить отзыв?", ok:"Удалить"}) === null) return;
-          const { error: e } = await db.from("reviews").delete().eq("id", r.id); if (e) return toast("Не удалось удалить отзыв.", 1); toast("Отзыв удалён."); draw(); drawFoot();
-        }}, "Удалить отзыв")) : null)));
-  };
-  if (me.role === "owner") { const sel = h("select", {onchange:e => { uid = e.target.value; draw(); }}, Object.values(profiles).map(p => h("option", {value:p.id}, `${p.nickname} · ${ROLE[p.role]}`))); sel.value = me.id; box.append(fld("Сотрудник", sel)); }
-  const pw = h("input", {type:"password", placeholder:"Новый пароль, от 10 символов", autocomplete:"new-password"});
-  const pwBtn = h("button", {class:"ghost", onclick:async () => {
-    if (pw.value.length < 10) return toast("Пароль: минимум 10 символов.", 1);
-    pwBtn.disabled = true; const { error } = await db.auth.updateUser({password:pw.value}); pwBtn.disabled = false;
-    if (error) return toast("Не удалось сменить пароль.", 1); pw.value = ""; toast("Пароль изменён.");
-  }}, "Сменить пароль");
-  box.append(out, h("h2", {}, "Аккаунт"), fld("Новый пароль", pw), h("div", {class:"acts"}, pwBtn, h("button", {class:"ghost", onclick:async () => { await db.auth.signOut(); me = null; drawNav(); go("home"); }}, `Выйти (${me.nickname} · ${ROLE[me.role]})`)));
-  await draw();
-}
-async function tabAch(box) {
-  const ta = h("textarea", {placeholder:"По одному достижению в строке", style:"min-height:140px"}), list = h("div");
-  const load = async () => {
-    const { data } = await db.from("achievements").select("*").order("name");
-    list.replaceChildren(h("h2", {}, `Список достижений (${data?.length || 0})`), ...(data || []).map(a => h("div", {class:"card closed", style:"display:flex;justify-content:space-between;align-items:center"}, a.name,
-      h("button", {class:"ghost", "aria-label":"Удалить " + a.name, onclick:async () => { await db.from("achievements").delete().eq("id", a.id); load(); }}, "×"))));
-  };
-  box.append(h("div", {class:"door"}, fld("Добавить достижения", ta), h("button", {class:"go", onclick:async () => {
-    const rows = [...new Set(ta.value.split("\n").map(s => s.trim().slice(0, 80)).filter(Boolean))].map(name => ({name}));
-    if (!rows.length) return;
-    const { error } = await db.from("achievements").upsert(rows, {onConflict:"name", ignoreDuplicates:true});
-    if (error) return toast("Не удалось добавить.", 1); ta.value = ""; toast("Добавлено."); load();
-  }}, "Добавить")), list);
-  load();
-}
-async function tabManage(box) {
-  const S = [["complaints", "Жалобы", subComplaints], ["bl", "Чёрный список", subBlacklist]];
-  if (me.role === "owner") S.unshift(["team", "Команда", subTeam], ["log", "Журнал", subLog]);
-  if (!S.some(x => x[0] === msub)) msub = S[0][0];
-  const pane = h("div"), seg = h("div", {class:"tabs"});
-  const draw = async () => { const p = h("div"); pane.replaceChildren(p); await S.find(x => x[0] === msub)[2](p); };
-  S.forEach(([k, l]) => seg.append(h("button", {class:k === msub ? "on" : "", onclick:e => { msub = k; [...seg.children].forEach(b => b.classList.remove("on")); e.currentTarget.classList.add("on"); draw(); }}, l)));
-  box.append(seg, pane); await draw();
-}
-async function subTeam(box) {
-  const n = h("input", {placeholder:"ник: a-z, 0-9, _", maxlength:20}), p = h("input", {placeholder:"пароль от 10 символов", type:"password", autocomplete:"new-password"});
-  const r = h("select", {}, h("option", {value:"moderator"}, "Модератор"), h("option", {value:"admin"}, "Админ")), msg = h("div", {class:"msg"});
-  const b = h("button", {class:"go", onclick:async () => {
-    b.disabled = true; msg.className = "msg err"; msg.textContent = "";
-    const { error } = await db.functions.invoke("create-staff", {body:{nickname:n.value.trim().toLowerCase(), password:p.value, role:r.value}});
-    b.disabled = false;
-    if (error) { let t = "Не удалось создать аккаунт."; try { t = (await error.context.json()).error || t; } catch {} msg.textContent = t; return; }
-    toast("Аккаунт создан. Передай ник и пароль сотруднику."); await loadMe(); go("staff");
-  }}, "Создать аккаунт");
-  box.append(h("div", {class:"door"}, fld("Ник", n), fld("Пароль", p), fld("Роль", r), b, msg), h("h2", {}, "Команда"),
-    ...Object.values(profiles).map(x => h("div", {class:"card closed"}, h("b", {}, x.nickname), h("div", {class:"meta"}, ROLE[x.role]))));
-}
-async function subLog(box) {
-  const { data } = await db.from("action_log").select("*").order("created_at", {ascending:false}).limit(200);
-  const L = {start:"начал(а) работу", close:"закрыл(а)", delete:"удалил(а)", cancel:"отозвал(а) заявку", transfer:"передал(а) заявку", hold:"перевёл(а) в ожидание", resume:"вернул(а) в работу"};
-  box.append(...(data?.length ? data.map(x => h("div", {class:"card"}, h("b", {}, `${x.action === "cancel" ? "Посетитель" : profiles[x.staff_id]?.nickname || "удалённый аккаунт"} ${L[x.action] || x.action}`), h("div", {}, x.summary), h("div", {class:"meta"}, fmt(x.created_at)))) : [h("p", {class:"empty"}, "Журнал пуст.")]));
-}
-async function subComplaints(box) {
-  const { data } = await db.from("complaints").select("*").order("created_at", {ascending:false}).limit(100);
-  box.append(...(data?.length ? data.map(x => h("div", {class:"card waiting"}, h("b", {}, "На помощника: " + x.staff_name), h("div", {}, x.text), h("div", {class:"meta"}, fmt(x.created_at)),
-    h("div", {class:"acts"}, h("button", {class:"ghost", onclick:async () => { await db.from("complaints").delete().eq("id", x.id); go("staff"); }}, "Решено")))) : [h("p", {class:"empty"}, "Жалоб нет.")]));
-}
-async function subBlacklist(box) {
-  const v = h("input", {placeholder:"ник или @юзернейм", maxlength:40});
-  const { data } = await db.from("blacklist").select("*").order("created_at", {ascending:false});
-  box.append(h("div", {class:"door"}, fld("Добавить вручную", v), h("button", {class:"go", onclick:async () => {
-    if (!v.value.trim()) return; const { error } = await db.from("blacklist").insert({value:v.value.trim()}); if (error) return toast("Не удалось добавить.", 1); go("staff");
-  }}, "Добавить")), h("h2", {}, `В списке: ${data?.length || 0}`),
-    ...(data || []).map(x => h("div", {class:"card", style:"display:flex;justify-content:space-between;align-items:center"}, x.value,
-      h("button", {class:"ghost", "aria-label":"Убрать " + x.value, onclick:async () => { await db.from("blacklist").delete().eq("value", x.value); go("staff"); }}, "×"))));
-}
-
-/* ---------- запуск ---------- */
-window.addEventListener("popstate", () => go(location.hash.slice(1)));
-db.auth.onAuthStateChange(ev => { if (ev === "SIGNED_OUT" && me) { me = null; drawNav(); go("login"); } });
-$("logo").onclick = () => go("home");
-(async () => {
-  const m = location.hash.match(/^#t=([0-9a-f-]{36})$/i);
-  if (m) { if (!toks().includes(m[1])) saveToks([...toks(), m[1]]); history.replaceState(null, "", location.pathname); }
-  try { await loadMe(); } catch (e) { console.error(e); me = null; }
-  drawNav(); drawFoot().catch(() => {});
-  const r0 = location.hash.slice(1);
-  await go(ROUTES.includes(r0.split("/")[0]) ? r0 : me ? "staff" : "home");
-})();
+      if (!/^[a-z0-9
