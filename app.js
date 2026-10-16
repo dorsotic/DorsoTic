@@ -540,3 +540,36 @@ $("logo").onclick = () => go("home");
   const r0 = location.hash.slice(1);
   await go(ROUTES.includes(r0.split("/")[0]) ? r0 : me ? "staff" : "home");
 })();
+
+/* ---------- глазок у полей пароля (в том числе на форуме) ---------- */
+(function () {
+  const NS = "http://www.w3.org/2000/svg";
+  const icon = off => {
+    const s = document.createElementNS(NS, "svg");
+    s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("width", "20"); s.setAttribute("height", "20");
+    s.setAttribute("fill", "none"); s.setAttribute("stroke", "currentColor"); s.setAttribute("stroke-width", "1.8");
+    s.setAttribute("stroke-linecap", "round"); s.setAttribute("stroke-linejoin", "round");
+    const p = document.createElementNS(NS, "path"); p.setAttribute("d", "M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z");
+    const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", "12"); c.setAttribute("cy", "12"); c.setAttribute("r", "3");
+    s.append(p, c);
+    if (off) { const l = document.createElementNS(NS, "path"); l.setAttribute("d", "M3 3l18 18"); s.append(l); }
+    return s;
+  };
+  const wrap = inp => {
+    if (inp.dataset.eye || inp.type !== "password" || !inp.parentNode) return;
+    inp.dataset.eye = "1";
+    const box = document.createElement("span"), btn = document.createElement("button");
+    box.className = "pw"; btn.type = "button"; btn.className = "eye";
+    const set = shown => { btn.replaceChildren(icon(shown)); btn.setAttribute("aria-label", shown ? "Скрыть пароль" : "Показать пароль"); btn.setAttribute("aria-pressed", String(shown)); };
+    set(false);
+    btn.addEventListener("click", () => {
+      const show = inp.type === "password", s = inp.selectionStart, e = inp.selectionEnd;
+      inp.type = show ? "text" : "password"; set(show); inp.focus();
+      try { inp.setSelectionRange(s, e); } catch (_) {}
+    });
+    inp.parentNode.insertBefore(box, inp); box.append(inp, btn);
+  };
+  const scan = root => root.querySelectorAll && root.querySelectorAll('input[type="password"]').forEach(wrap);
+  scan(document);
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches && n.matches('input[type="password"]')) wrap(n); scan(n); } }))).observe(document.body, {childList:true, subtree:true});
+})();
