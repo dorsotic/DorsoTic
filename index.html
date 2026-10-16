@@ -11,16 +11,6 @@
 <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
 <link rel="apple-touch-icon" href="./favicon.png">
 <meta name="application-name" content="DorsoTic">
-<link rel="canonical" href="https://dorsotic.fluxcast.dev/">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "DorsoTic",
-  "alternateName": "DorsoTic — помощь с достижениями DOORS",
-  "url": "https://dorsotic.fluxcast.dev/"
-}
-</script>
 <meta property="og:type" content="website">
 <meta property="og:title" content="DorsoTic — DOORS Achievement Companion">
 <meta property="og:description" content="Track, discover and complete DOORS achievements.">
@@ -226,6 +216,13 @@ main{padding-bottom:2rem}#app.tw{padding-bottom:6rem}footer{padding-bottom:1.2re
 .toast{bottom:calc(1.2rem + env(safe-area-inset-bottom))}
 #fbar{bottom:calc(1rem + env(safe-area-inset-bottom))}
 @media(max-width:600px){main{padding-bottom:2rem}footer{padding-bottom:1.2rem}.toast{bottom:calc(1.2rem + env(safe-area-inset-bottom))}}
+
+/* ===== глазок у пароля ===== */
+.pw{position:relative;display:block}
+.pw input{padding-right:2.9rem}
+.pw .eye{position:absolute;right:.25rem;top:0;bottom:0;width:2.6rem;display:flex;align-items:center;justify-content:center;margin:0;padding:0;border:0;border-radius:10px;background:none;box-shadow:none;color:var(--gold);opacity:.75;cursor:pointer}
+.pw .eye:hover,.pw .eye[aria-pressed="true"]{opacity:1}
+.pw .eye:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 </style>
 </head>
 <body>
