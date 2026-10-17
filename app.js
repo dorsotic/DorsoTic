@@ -1,7 +1,7 @@
 "use strict";
 const SB_URL = "https://swdmjwgwripgpcnglhse.supabase.co";
 const SB_KEY = "sb_publishable_hv4OhCNL1n8A5pbs526FpQ_hX7o6xmb";
-const SITE_VERSION = "2.20-1b";
+const SITE_VERSION = "2.20-4b";
 const TITLE = "Достижения DOORS: помощь с ачивками — DorsoTic";
 const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Владелец"};
 const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
@@ -482,7 +482,7 @@ async function tabAch(box) {
     const rows = [...new Set(ta.value.split("\n").map(s => s.trim().slice(0, 80)).filter(Boolean))].map(name => ({name}));
     if (!rows.length) return;
     const { error } = await db.from("achievements").upsert(rows, {onConflict:"name", ignoreDuplicates:true});
-    if (error) return toast("Не удалось добавить.", 1); ta.value = ""; toast("Добавлено."); load();
+    if (error) { console.error(error); return toast("Не удалось добавить: " + (error.message || error.code), 1); } ta.value = ""; toast("Добавлено."); load();
   }}, "Добавить")), list);
   load();
 }
