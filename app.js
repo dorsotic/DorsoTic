@@ -123,7 +123,7 @@ async function go(v) {
   const box = h("div");
   $("app").className = v === "staff" ? "wide" : "";
   $("app").replaceChildren(box);
-  document.querySelectorAll("#nav button").forEach(b => { const on = b.dataset.v === v; b.classList.toggle("cur", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"); });
+  document.querySelectorAll("#nav button").forEach(b => { const on = b.dataset.v === v; b.classList.toggle("cur", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"); if (on) try { b.scrollIntoView({inline:"center", block:"nearest"}); } catch (_) {} });
   const hv = v === "forum" && FPATH ? "forum/" + FPATH : v; if (location.hash.slice(1) !== hv) history.pushState(null, "", "#" + hv);
   window.scrollTo(0, 0); clearInterval(timer); document.title = TITLE;
   try {
