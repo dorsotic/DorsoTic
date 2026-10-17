@@ -241,6 +241,15 @@ header nav button.cur span:first-child{background:linear-gradient(150deg,rgba(22
 header nav button.cur::after{content:"";position:absolute;left:50%;bottom:.14rem;width:1.1rem;height:2px;margin-left:-.55rem;border-radius:2px;background:var(--gold)}
 header nav button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 @media(max-width:600px){header nav{padding:.3rem;gap:.15rem;border-radius:20px}header nav button{min-width:4.1rem;padding:.3rem .5rem .5rem;font-size:.68rem}header nav button span:first-child{width:2.1rem;height:2.1rem;font-size:1.05rem;border-radius:12px}header nav button .ic{width:1.45rem;height:1.45rem}}
+
+/* ===== без плиток у иконок, рамка вокруг выбранной кнопки ===== */
+header nav button{border:1px solid transparent;padding:.4rem .7rem .4rem;gap:.2rem}
+header nav button span:first-child{width:auto;height:auto;background:none;border:0;box-shadow:none;border-radius:0}
+header nav button:hover span:first-child{transform:translateY(-2px);border-color:transparent}
+header nav button.cur{background:linear-gradient(150deg,rgba(229,189,112,.26),rgba(229,189,112,.08));border-color:rgba(229,189,112,.55);box-shadow:0 0 16px rgba(229,189,112,.18)}
+header nav button.cur span:first-child{background:none;border:0;box-shadow:none}
+header nav button.cur::after{display:none}
+@media(max-width:600px){header nav button{padding:.35rem .5rem}header nav button span:first-child{width:auto;height:auto}}
 </style>
 </head>
 <body>
