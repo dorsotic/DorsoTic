@@ -1,13 +1,13 @@
 "use strict";
 const SB_URL = "https://swdmjwgwripgpcnglhse.supabase.co";
 const SB_KEY = "sb_publishable_hv4OhCNL1n8A5pbs526FpQ_hX7o6xmb";
-const SITE_VERSION = "2.20-4b";
+const SITE_VERSION = "2.20-1b";
 const TITLE = "Достижения DOORS: помощь с ачивками — DorsoTic";
 const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Владелец"};
 const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
 const PL = {discord:"Discord", telegram:"Telegram"};
 let FPATH = "";
-const ROUTES = ["home", "info", "team", "forum", "update", "staff", "login"];
+const ROUTES = ["home", "info", "team", "forum", "market", "update", "staff", "login"];
 const WARN = "Перед тем как отправить заявку, убедитесь, что вы выбрали достижение, которое нужно. Просим вас не выбирать случайное достижение и не писать в комментарии о другом, которого нет в списке. Если вы так поступите, ваша заявка будет удалена.";
 
 const $ = id => document.getElementById(id);
@@ -98,8 +98,15 @@ async function loadMe() {
   return me;
 }
 function drawNav() {
-  const nb = (v, ic, l) => h("button", {"data-v":v, onclick:() => go(v)}, h("span", {"aria-hidden":"true"}, ic), h("span", {}, l));
-  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("info", "?", "Инфо"), nb("team", "★", "Помощники"), nb("forum", "☰", "Форум"), nb("update", "◷", "Обновление"), ...(me ? [nb("staff", "☺", "Панель")] : []));
+  const ICON_EXT = ["png", "svg", "webp"]; // форматы иконок меню: файл icons/<вкладка>.<формат>, пока файла нет, показывается значок-символ
+  const navIcon = (v, ic) => {
+    const s = h("span", {"aria-hidden":"true"}, ic), im = new Image(); let i = 0; im.alt = ""; im.className = "ic";
+    im.onload = () => s.replaceChildren(im);
+    im.onerror = () => { if (++i < ICON_EXT.length) im.src = `icons/${v}.${ICON_EXT[i]}`; };
+    im.src = `icons/${v}.${ICON_EXT[0]}`; return s;
+  };
+  const nb = (v, ic, l) => h("button", {"data-v":v, onclick:() => go(v)}, navIcon(v, ic), h("span", {}, l));
+  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("info", "?", "Инфо"), nb("team", "★", "Помощники"), nb("forum", "☰", "Форум"), nb("market", "◈", "Маркет"), nb("update", "◷", "Обновление"), ...(me ? [nb("staff", "☺", "Панель")] : []));
   $("fl").replaceChildren(...(me ? [] : [h("a", {href:"#login", class:"lk", onclick:e => { e.preventDefault(); go("login"); }}, "Вход для персонала")]));
 }
 async function drawFoot() {
@@ -121,11 +128,19 @@ async function go(v) {
   window.scrollTo(0, 0); clearInterval(timer); document.title = TITLE;
   try {
     if (v === "home") await home(box); else if (v === "login") login(box); else if (v === "info") how(box);
-    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box);
+    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box); else if (v === "market") marketView(box);
     else await staffView(box);
   } catch (e) { console.error(e); box.replaceChildren(h("h1", {}, "Ошибка"), h("p", {class:"sub"}, "Не удалось загрузить страницу. Обнови её.")); }
 }
 
+
+/* ---------- маркет (заглушка) ---------- */
+function marketView(box) {
+  document.title = "Маркет — " + TITLE;
+  box.append(h("h1", {}, "Маркет"), h("p", {class:"sub"}, "Раздел в разработке"),
+    h("div", {class:"door", style:"text-align:center"}, h("b", {}, "Скоро здесь появится маркет"), h("p", {class:"meta"}, "Следи за новостями DorsoNews."),
+      h("p", {style:"margin-top:1rem"}, "Лучший чат по DOORS: ", h("a", {href:"https://t.me/Doors_Roblox_Chat_RU", target:"_blank", rel:"noopener noreferrer"}, "t.me/Doors_Roblox_Chat_RU"))));
+}
 
 /* ---------- обновление: The Candy Vault ---------- */
 const CV = {start:"2026-10-22T21:00:00+03:00", end:"2026-11-09T07:55:00+03:00"}; // время МСК (UTC+3)
