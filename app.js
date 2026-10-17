@@ -98,7 +98,7 @@ async function loadMe() {
   return me;
 }
 function drawNav() {
-  const ICON_EXT = ["png", "svg", "webp"]; // форматы иконок меню: файл icons/<вкладка>.<формат>, пока файла нет, показывается значок-символ
+  const ICON_EXT = ["png", "svg", "webp", "jpg", "jpeg", "gif"]; // форматы иконок меню: файл icons/<вкладка>.<формат>, пока файла нет, показывается значок-символ
   const navIcon = (v, ic) => {
     const s = h("span", {"aria-hidden":"true"}, ic), im = new Image(); let i = 0; im.alt = ""; im.className = "ic";
     im.onload = () => s.replaceChildren(im);
