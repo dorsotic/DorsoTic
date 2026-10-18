@@ -362,55 +362,38 @@ details[open] p{animation:rise .35s var(--ease)}
 .chip-link{display:inline-block;margin-top:1rem;padding:.6rem 1.1rem;border:1px solid rgba(229,189,112,.35);border-radius:999px;color:var(--gold);font-size:.85rem;text-decoration:none;transition:background .2s,transform .2s var(--ease)}
 .chip-link:hover{background:rgba(229,189,112,.12);transform:translateY(-2px)}
 
-/* --- верхнее меню (компьютер) --- */
-#nav{position:static;left:auto;bottom:auto;transform:none;order:0;flex:none;width:auto;max-width:none;margin:0;display:flex;flex-wrap:nowrap;justify-content:center;gap:.2rem;overflow:visible;scroll-snap-type:none;padding:.28rem;border-radius:999px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
-#nav button{position:relative;flex:0 0 auto;display:flex;flex-direction:row;align-items:center;gap:.5rem;min-width:0;min-height:2.4rem;margin:0;padding:.4rem .95rem;border:1px solid transparent;border-radius:999px;background:transparent;color:var(--muted);font:600 .86rem/1 Georgia,serif;white-space:nowrap;overflow:hidden;box-shadow:none;filter:none;scroll-snap-align:none}
-#nav button .ni{display:grid;place-items:center;width:auto;height:auto;font-size:1.05rem;line-height:1;border:0;border-radius:0;background:none;box-shadow:none;transition:transform .3s var(--spring),background .25s}
-#nav button .ic{width:1.25rem;height:1.25rem}
-#nav .more{display:none}
-@media(hover:hover){#nav button:hover{color:var(--text);background:rgba(255,255,255,.07);transform:none;box-shadow:none}#nav button:hover .ni{transform:translateY(-2px) scale(1.12)}}
-#nav button:active{transform:scale(.94)}
-#nav button.cur{color:var(--gold);background:rgba(229,189,112,.16);border-color:rgba(229,189,112,.45);box-shadow:0 0 18px rgba(229,189,112,.14)}
-@media(min-width:821px){
-  header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:1rem;flex-wrap:nowrap}
-  header .head-tools{justify-self:end;grid-column:3}
-  #nav{grid-column:2;grid-row:1}
-}
-@media(min-width:821px) and (max-width:1099px){
-  header{grid-template-columns:1fr auto}
-  header .head-tools{grid-column:2}
-  #nav{grid-column:1/-1;grid-row:2;justify-self:center}
-}
-.mlist{display:grid;gap:.5rem}
-.mrow{display:flex;align-items:center;gap:.9rem;width:100%;min-height:3.7rem;margin:0;padding:.7rem .9rem;text-align:left;font:400 1rem Georgia,serif;color:var(--text);border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(255,255,255,.04);box-shadow:none}
-.mrow .ni{flex:none;display:grid;place-items:center;width:2.7rem;height:2.7rem;border-radius:14px;background:rgba(229,189,112,.12);color:var(--gold);font-size:1.2rem}
-.mrow .ic{width:1.5rem;height:1.5rem}
-.mt{flex:1;display:flex;flex-direction:column;gap:.1rem;min-width:0}.mt b{font-size:1rem}.mt small{color:var(--muted);font-size:.78rem}
-.mrow.cur{border-color:rgba(229,189,112,.5);background:rgba(229,189,112,.1)}
-.sheet.ms{padding-bottom:calc(1.2rem + env(safe-area-inset-bottom))}
 @media(min-width:821px){
   .sheet-bd.hs{align-items:center;padding:1rem}
   .sheet-bd.hs .sheet{width:min(100%,31rem);max-height:88dvh;border-radius:26px;border-bottom:1px solid rgba(255,255,255,.1)}
 }
 
-/* --- ТЕЛЕФОН: нижнее меню, крупные элементы, шторки вместо окон --- */
+
+/* --- страницы: общий стиль --- */
+.hero{position:relative;margin:.2rem 0 1rem;padding:1.5rem 1.2rem 1.2rem;text-align:center;border:1px solid rgba(229,189,112,.22);border-radius:28px;background:radial-gradient(120% 140% at 50% -20%,rgba(229,189,112,.18),transparent 60%),rgba(18,20,26,.7);box-shadow:0 18px 50px rgba(0,0,0,.35);animation:rise .6s var(--ease) backwards}
+.hero h1{margin:.15rem 0 .4rem;font-size:clamp(2.2rem,8vw,3.2rem)}.hero .sub{margin:0 auto}
+.eyebrow{display:inline-block;padding:.2rem .75rem;border:1px solid rgba(229,189,112,.35);border-radius:999px;background:rgba(229,189,112,.08);color:var(--gold);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase}
+.v-home .stats .stat{padding:.8rem .5rem;border-radius:20px;background:linear-gradient(160deg,rgba(229,189,112,.09),rgba(17,19,25,.85))}
+.v-home .stats .stat span{background:linear-gradient(180deg,#f6dca0,#c8923a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.v-info .step{position:relative;margin-bottom:.85rem}
+.v-info .step:after{content:"";position:absolute;left:1.9rem;top:3.2rem;bottom:-1rem;width:2px;background:linear-gradient(var(--gold2),transparent);opacity:.6}
+.v-info .step:has(+h2):after{display:none}
+.v-info h2{margin-top:1.4rem}
+.v-update .stats.cd .stat{padding:.9rem .3rem;border-radius:22px;border-color:rgba(229,189,112,.28);background:linear-gradient(160deg,rgba(229,189,112,.12),rgba(12,13,18,.9))}
+.v-update .stats.cd .stat span{font-size:2.4rem;background:linear-gradient(180deg,#f6dca0,#c8923a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.v-update .cv{text-align:center}
+.v-login .door{max-width:26rem;margin:1rem auto}
+.v-login h1,.v-login .sub{text-align:center}
+.v-staff .card{padding:1rem 1.05rem;border-radius:20px}
+.v-staff .card>b:first-child{display:block;margin-bottom:.2rem;font-size:1.05rem;color:#f4e6c8}
+.v-staff .card .acts{margin-top:.75rem;padding-top:.75rem;border-top:1px solid rgba(255,255,255,.07)}
+.v-staff .tabs{padding:.3rem;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line);width:max-content;max-width:100%}
+.v-staff .tabs button{border:0}
+
+/* --- ТЕЛЕФОН: страницы --- */
 @media(max-width:820px){
-  html{font-size:15px}
-  header{display:flex;flex-wrap:nowrap;justify-content:space-between;padding:calc(.5rem + env(safe-area-inset-top)) 1rem .5rem;background:rgba(10,12,16,.95);backdrop-filter:none;-webkit-backdrop-filter:none}
-  .logo{font-size:1.45rem}
-  #nav{position:fixed;left:0;right:0;bottom:0;z-index:40;width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:.3rem .4rem calc(.3rem + env(safe-area-inset-bottom));border:0;border-top:1px solid rgba(255,255,255,.08);border-radius:0;background:rgba(12,14,19,.9);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 -10px 30px rgba(0,0,0,.35)}
-  #nav .sec{display:none}#nav .more{display:flex}
-  #nav button{flex-direction:column;justify-content:center;gap:.18rem;min-height:3.5rem;padding:.3rem .1rem;border:0;border-radius:14px;background:none;box-shadow:none;font-size:.66rem;font-weight:600}
-  #nav button .ni{width:3.3rem;height:1.9rem;border-radius:999px;font-size:1.2rem}
-  #nav button .ic{width:1.4rem;height:1.4rem}
-  #nav button.cur{background:none;border:0;box-shadow:none}
-  #nav button.cur .ni{background:rgba(229,189,112,.22);transform:translateY(-1px)}
-  #app{padding:1rem .85rem 1.5rem}
-  #app.tw{padding-left:0;padding-right:0;padding-bottom:calc(9.5rem + env(safe-area-inset-bottom))}
-  footer{padding:.8rem 1rem calc(5.6rem + env(safe-area-inset-bottom))}
-  #fbar{bottom:calc(4.8rem + env(safe-area-inset-bottom))}
-  #toasts{bottom:calc(5rem + env(safe-area-inset-bottom))}
+  #app{padding:1rem .85rem 2rem}
   h1{font-size:1.9rem}
+  .hero{padding:1.2rem .9rem 1rem;border-radius:24px}
   input,textarea,select{min-height:3rem;border-radius:16px}
   textarea{min-height:5rem}
   button{min-height:2.9rem}
@@ -420,14 +403,14 @@ details[open] p{animation:rise .35s var(--ease)}
   .pk-list{max-height:15rem}.pk-i{padding:.7rem .8rem;font-size:.95rem}
   .card{padding:.9rem 1rem;border-radius:18px}
   .stats{gap:.5rem}.stat{padding:.7rem .5rem;border-radius:18px}.stat span{font-size:1.6rem}
-  .stats.cd .stat span{font-size:1.7rem}
+  .stats.cd .stat span,.v-update .stats.cd .stat span{font-size:1.8rem}
   .tm{padding:.85rem .9rem}
   summary{min-height:2.8rem}
   .bd{align-items:end;padding:0}
   .bd .mdl{width:100%;padding:1.1rem 1rem calc(1.1rem + env(safe-area-inset-bottom));border-radius:26px 26px 0 0;border-bottom:0;animation:sheetIn .32s var(--ease) both}
   .bd.out .mdl{animation:sheetOut .2s ease forwards}
   .mdl .acts{flex-direction:column-reverse;gap:.5rem}.mdl .acts button{width:100%;min-height:3.1rem}
-  #app.wide .tabs{flex-wrap:nowrap;overflow-x:auto;margin:0 -.85rem .7rem;padding:.1rem .85rem .35rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #app.wide .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   #app.wide .tabs::-webkit-scrollbar{display:none}#app.wide .tabs button{flex:none;min-height:2.6rem}
   #app.wide .acts{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
   #app.wide .acts button{width:100%;min-height:2.7rem}
