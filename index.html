@@ -264,7 +264,6 @@ header nav button.cur::after{display:none}
 @keyframes toastOut{to{opacity:0;transform:translateY(8px) scale(.96)}}
 @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
-@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 body.lock{overflow:hidden}
 
 /* --- появление страниц и элементов --- */
@@ -358,7 +357,6 @@ details[open] p{animation:rise .35s var(--ease)}
 .warning-caption.live{color:var(--ok);animation:pulse 1.6s ease-in-out infinite}
 .cvbar{height:8px;margin:.7rem 0 .2rem}.cvbar[hidden]{display:none}.cvbar i{transition:width 1s linear}
 .soon{text-align:center;padding:2rem 1.2rem}
-.bigico{display:inline-block;margin-bottom:.4rem;font-size:3.2rem;line-height:1;color:var(--gold);text-shadow:0 0 30px rgba(229,189,112,.45);animation:floaty 3.2s ease-in-out infinite}
 .chip-link{display:inline-block;margin-top:1rem;padding:.6rem 1.1rem;border:1px solid rgba(229,189,112,.35);border-radius:999px;color:var(--gold);font-size:.85rem;text-decoration:none;transition:background .2s,transform .2s var(--ease)}
 .chip-link:hover{background:rgba(229,189,112,.12);transform:translateY(-2px)}
 
