@@ -107,22 +107,10 @@ const navIcon = (v, sym) => {
   im.onerror = () => { if (++i < ICON_EXT.length) im.src = `icons/${v}.${ICON_EXT[i]}`; };
   im.src = `icons/${v}.${ICON_EXT[0]}`; return s;
 };
-const SEC = ["market", "update", "staff", "login"]; // на телефоне прячутся за кнопкой «Ещё»
 function drawNav() {
-  const nb = (v, sym, l, sec) => h("button", {"data-v":v, class:sec ? "sec" : "", onclick:() => go(v)}, navIcon(v, sym), h("span", {class:"nl"}, l));
-  const more = h("button", {"data-v":"more", class:"more", "aria-haspopup":"dialog", onclick:openMore}, h("span", {class:"ni", "aria-hidden":"true"}, "⋯"), h("span", {class:"nl"}, "Ещё"));
-  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("team", "★", "Помощники"), nb("forum", "☰", "Форум"), nb("info", "?", "Инфо"),
-    nb("market", "◈", "Маркет", 1), nb("update", "◷", "Обновление", 1), ...(me ? [nb("staff", "☺", "Панель", 1)] : []), more);
+  const nb = (v, sym, l) => h("button", {"data-v":v, onclick:() => go(v)}, navIcon(v, sym), h("span", {}, l));
+  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("info", "?", "Инфо"), nb("team", "★", "Помощники"), nb("forum", "☰", "Форум"), nb("market", "◈", "Маркет"), nb("update", "◷", "Обновление"), ...(me ? [nb("staff", "☺", "Панель")] : []));
   $("fl").replaceChildren(...(me ? [] : [h("a", {href:"#login", class:"lk", onclick:e => { e.preventDefault(); go("login"); }}, "Вход для персонала")]));
-}
-/* «Ещё» — нижняя шторка со вторичными разделами (для телефона) */
-function openMore() {
-  document.querySelector(".sheet-bd")?.remove();
-  const cur = location.hash.slice(1).split("/")[0];
-  const row = (v, sym, l, d) => h("button", {class:"mrow" + (cur === v ? " cur" : ""), onclick:() => { closeSheet(); go(v); }}, navIcon(v, sym), h("span", {class:"mt"}, h("b", {}, l), h("small", {}, d)), h("span", {class:"chev", "aria-hidden":"true"}, "›"));
-  const rows = [row("market", "◈", "Маркет", "Скоро открытие"), row("update", "◷", "Обновление", "The Candy Vault и таймер"),
-    me ? row("staff", "☺", "Панель", "Заявки и профиль") : row("login", "☺", "Вход для персонала", "Только для помощников")];
-  openSheet(h("div", {class:"sheet ms", role:"dialog", "aria-modal":"true", "aria-label":"Ещё"}, h("div", {class:"grab"}), h("div", {class:"mlist"}, rows)));
 }
 /* общая шторка: закрытие по фону, Escape и с анимацией */
 function openSheet(el, onClose) {
@@ -151,7 +139,7 @@ async function go(v) {
   const box = h("div");
   $("app").className = (v === "staff" ? "wide " : "") + "v-" + v;
   $("app").replaceChildren(box);
-  document.querySelectorAll("#nav button").forEach(b => { const on = b.dataset.v === v || (b.dataset.v === "more" && SEC.includes(v)); b.classList.toggle("cur", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"); });
+  document.querySelectorAll("#nav button").forEach(b => { const on = b.dataset.v === v; b.classList.toggle("cur", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"); if (on) try { b.scrollIntoView({inline:"center", block:"nearest"}); } catch (_) {} });
   const hv = v === "forum" && FPATH ? "forum/" + FPATH : v; if (location.hash.slice(1) !== hv) history.pushState(null, "", "#" + hv);
   window.scrollTo(0, 0); clearInterval(timer); document.title = TITLE;
   try {
@@ -272,7 +260,7 @@ async function home(box) {
     ps.replaceChildren(tile("Выполнено", d.closed), tile("В работе", d.open), tile("Помощников", d.staff), tile(d.reviews ? `Оценка (${d.reviews})` : "Оценка", d.avg || "—"));
   });
   const fsec = (n, t, ...k) => h("section", {class:"fs"}, h("div", {class:"fs-h"}, h("i", {}, String(n)), h("span", {}, t)), ...k);
-  box.append(h("h1", {}, "DorsoTic"), h("p", {class:"sub"}, "Помощь с достижениями в DOORS. Оставь заявку, и с тобой свяжется помощник."), ps,
+  box.append(h("div", {class:"hero"}, h("div", {class:"eyebrow"}, "DOORS · Roblox"), h("h1", {}, "DorsoTic"), h("p", {class:"sub"}, "Помощь с достижениями. Оставь заявку, и с тобой свяжется помощник.")), ps,
     h("div", {class:"door form"},
       fsec(1, "Кто ты", fld("Ник в Roblox", nick)),
       fsec(2, "Какие достижения нужны (до 5)", pk.el),
@@ -682,7 +670,7 @@ $("logo").onclick = () => go("home");
 
 /* ---------- эффекты: волна при нажатии, каскадное появление ---------- */
 (function () {
-  const NO = ".ib,.eye,.stbtn,.lk2,.avbtn,.avedit,.bnedit,.bnrm,.pick button,.tag button,.x,.cam";
+  const NO = "#nav button,.ib,.eye,.stbtn,.lk2,.avbtn,.avedit,.bnedit,.bnrm,.pick button,.tag button,.x,.cam";
   document.addEventListener("pointerdown", e => {
     if (reduceMotion() || e.button > 0) return;
     const b = e.target.closest && e.target.closest("button"); if (!b || b.disabled || b.matches(NO)) return;
@@ -692,7 +680,6 @@ $("logo").onclick = () => go("home");
     const r = b.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2, w = h("span", {class:"rpl", "aria-hidden":"true"});
     w.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
     b.append(w); setTimeout(() => w.remove(), 650);
-    if (b.closest("#nav")) try { navigator.vibrate && navigator.vibrate(6); } catch (_) {}
   }, {passive:true});
   const SEL = ".card,.stat,details,.tm,.fs,.mrow,.door,.rv,.dr";
   const idx = el => { let i = 0, n = el; while ((n = n.previousElementSibling)) i++; return Math.min(i, 12); };
