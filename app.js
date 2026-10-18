@@ -166,7 +166,7 @@ const tile = (label, val) => { const n = h("span", {}, "0"); countUp(n, val); re
 function marketView(box) {
   document.title = "Маркет — " + TITLE;
   box.append(h("h1", {}, "Маркет"), h("p", {class:"sub"}, "Раздел в разработке"),
-    h("div", {class:"door soon"}, h("div", {class:"bigico", "aria-hidden":"true"}, "◈"), h("b", {}, "Скоро здесь появится маркет"), h("p", {class:"meta"}, "Следи за новостями DorsoNews."),
+    h("div", {class:"door soon"}, h("b", {}, "Скоро здесь появится маркет"), h("p", {class:"meta"}, "Следи за новостями DorsoNews."),
       h("a", {class:"chip-link", href:"https://t.me/Doors_Roblox_Chat_RU", target:"_blank", rel:"noopener noreferrer"}, "Лучший чат по DOORS · t.me/Doors_Roblox_Chat_RU")));
 }
 
