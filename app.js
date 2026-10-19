@@ -1,7 +1,7 @@
 "use strict";
 const SB_URL = "https://swdmjwgwripgpcnglhse.supabase.co";
 const SB_KEY = "sb_publishable_hv4OhCNL1n8A5pbs526FpQ_hX7o6xmb";
-const SITE_VERSION = "2.20-6b";
+const SITE_VERSION = "2.21-market";
 const TITLE = "Достижения DOORS: помощь с ачивками — DorsoTic";
 const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Владелец"};
 const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
@@ -140,11 +140,11 @@ async function go(v) {
   $("app").className = (v === "staff" ? "wide " : "") + "v-" + v;
   $("app").replaceChildren(box);
   document.querySelectorAll("#nav button").forEach(b => { const on = b.dataset.v === v; b.classList.toggle("cur", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"); if (on) try { b.scrollIntoView({inline:"center", block:"nearest"}); } catch (_) {} });
-  const hv = v === "forum" && FPATH ? "forum/" + FPATH : v; if (location.hash.slice(1) !== hv) history.pushState(null, "", "#" + hv);
+  const hv = (v === "forum" || v === "market") && FPATH ? v + "/" + FPATH : v; if (location.hash.slice(1) !== hv) history.pushState(null, "", "#" + hv);
   window.scrollTo(0, 0); clearInterval(timer); document.title = TITLE;
   try {
     if (v === "home") await home(box); else if (v === "login") login(box); else if (v === "info") how(box);
-    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box); else if (v === "market") marketView(box);
+    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box); else if (v === "market") await marketView(box);
     else await staffView(box);
   } catch (e) { console.error(e); box.replaceChildren(h("h1", {}, "Ошибка"), h("p", {class:"sub"}, "Не удалось загрузить страницу. Обнови её.")); }
 }
@@ -161,14 +161,6 @@ function countUp(el, to) {
   requestAnimationFrame(f);
 }
 const tile = (label, val) => { const n = h("span", {}, "0"); countUp(n, val); return h("div", {class:"stat"}, n, label); };
-
-/* ---------- маркет (заглушка) ---------- */
-function marketView(box) {
-  document.title = "Маркет — " + TITLE;
-  box.append(h("h1", {}, "Маркет"), h("p", {class:"sub"}, "Раздел в разработке"),
-    h("div", {class:"door soon"}, h("b", {}, "Скоро здесь появится маркет"), h("p", {class:"meta"}, "Следи за новостями DorsoNews."),
-      h("a", {class:"chip-link", href:"https://t.me/Doors_Roblox_Chat_RU", target:"_blank", rel:"noopener noreferrer"}, "Лучший чат по DOORS · t.me/Doors_Roblox_Chat_RU")));
-}
 
 /* ---------- обновление: The Candy Vault ---------- */
 const CV = {start:"2026-10-22T21:00:00+03:00", end:"2026-11-09T07:55:00+03:00"}; // время МСК (UTC+3)
