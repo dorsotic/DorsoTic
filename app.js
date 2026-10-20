@@ -1,7 +1,7 @@
 "use strict";
 const SB_URL = "https://swdmjwgwripgpcnglhse.supabase.co";
 const SB_KEY = "sb_publishable_hv4OhCNL1n8A5pbs526FpQ_hX7o6xmb";
-const SITE_VERSION = "2.20-6b";
+const SITE_VERSION = "2.21";
 const TITLE = "Достижения DOORS: помощь с ачивками — DorsoTic";
 const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Владелец"};
 const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
@@ -140,11 +140,11 @@ async function go(v) {
   $("app").className = (v === "staff" ? "wide " : "") + "v-" + v;
   $("app").replaceChildren(box);
   document.querySelectorAll("#nav button").forEach(b => { const on = b.dataset.v === v; b.classList.toggle("cur", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"); if (on) try { b.scrollIntoView({inline:"center", block:"nearest"}); } catch (_) {} });
-  const hv = v === "forum" && FPATH ? "forum/" + FPATH : v; if (location.hash.slice(1) !== hv) history.pushState(null, "", "#" + hv);
+  const hv = (v === "forum" || v === "market") && FPATH ? v + "/" + FPATH : v; if (location.hash.slice(1) !== hv) history.pushState(null, "", "#" + hv);
   window.scrollTo(0, 0); clearInterval(timer); document.title = TITLE;
   try {
     if (v === "home") await home(box); else if (v === "login") login(box); else if (v === "info") how(box);
-    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box); else if (v === "market") marketView(box);
+    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box); else if (v === "market") await marketView(box);
     else await staffView(box);
   } catch (e) { console.error(e); box.replaceChildren(h("h1", {}, "Ошибка"), h("p", {class:"sub"}, "Не удалось загрузить страницу. Обнови её.")); }
 }
@@ -161,14 +161,6 @@ function countUp(el, to) {
   requestAnimationFrame(f);
 }
 const tile = (label, val) => { const n = h("span", {}, "0"); countUp(n, val); return h("div", {class:"stat"}, n, label); };
-
-/* ---------- маркет (заглушка) ---------- */
-function marketView(box) {
-  document.title = "Маркет — " + TITLE;
-  box.append(h("h1", {}, "Маркет"), h("p", {class:"sub"}, "Раздел в разработке"),
-    h("div", {class:"door soon"}, h("b", {}, "Скоро здесь появится маркет"), h("p", {class:"meta"}, "Следи за новостями DorsoNews."),
-      h("a", {class:"chip-link", href:"https://t.me/Doors_Roblox_Chat_RU", target:"_blank", rel:"noopener noreferrer"}, "Лучший чат по DOORS · t.me/Doors_Roblox_Chat_RU")));
-}
 
 /* ---------- обновление: The Candy Vault ---------- */
 const CV = {start:"2026-10-22T21:00:00+03:00", end:"2026-11-09T07:55:00+03:00"}; // время МСК (UTC+3)
@@ -333,6 +325,15 @@ async function team(box) {
   box.append(h("h1", {}, "Помощники"), h("p", {class:"sub"}, "Нажми на помощника, чтобы увидеть его статистику"));
   const list = h("div", {class:"tgrid"}, ...[0, 1, 2, 3].map(() => h("div", {class:"tm sk-card"}, h("div", {class:"av sk"}), h("div", {class:"tmi"}, h("div", {class:"sk l1"}), h("div", {class:"sk l2"})))));
   box.append(list);
+  const gbox = h("div"); box.append(gbox);
+  db.rpc("market_guarantor_list").then(({ data, error }) => { // отдельные помощники «Гарант» (маркет); без market.sql блок не показывается
+    if (error || !data?.length || !gbox.isConnected) return;
+    gbox.replaceChildren(h("h2", {style:"margin:1.4rem 0 .2rem"}, "Гаранты"), h("p", {class:"sub"}, "Проводят обмены в маркете"),
+      h("div", {class:"tgrid"}, ...data.map(g => h("button", {type:"button", class:"tm", "aria-label":"Гарант " + (g.display_name || g.username), onclick:() => go("market/g")},
+        h("div", {class:"av tmav"}, initial(g.display_name || g.username)),
+        h("div", {class:"tmi"}, h("div", {class:"tmn"}, h("b", {}, g.display_name || g.username), h("span", {class:"badge"}, "Гарант")), h("div", {class:"meta"}, "Обменов проведено: " + g.deals_done)),
+        h("span", {class:"chev", "aria-hidden":"true"}, "›")))));
+  });
   const rows = await loadTeam();
   if (!rows.length) { list.replaceChildren(h("p", {class:"empty"}, "Пока никого.")); return; }
   list.replaceChildren(...rows.map((x, i) => {
