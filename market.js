@@ -152,7 +152,7 @@ async function mkEdit(box, C, id) {
 async function mkUpload(file) {
   const blob = await cropImg(file, 512, 512, .85), path = crypto.randomUUID() + ".jpg";
   const { error } = await db.storage.from("market").upload(path, blob, {contentType:"image/jpeg"});
-  if (error) throw bad("Не удалось загрузить фото."); return path;
+  if (error) { console.error("market upload:", error); throw bad("Не удалось загрузить фото: " + (error.message || error.error || "")); } return path;
 }
 function mkForm(box, C, l) {
   const msg = h("div", {class:"msg err", role:"alert"});
