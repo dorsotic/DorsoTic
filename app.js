@@ -200,7 +200,7 @@ function updateView(box) {
 }
 
 /* ---------- коллаб: только таймер до начала ---------- */
-const COLLAB = {start:"2026-10-24T00:00:00+03:00"}; // время МСК (UTC+3)
+const COLLAB = {start:"2026-10-24T00:00:00+03:00", img:""}; // время МСК (UTC+3); img — имя файла картинки над таймером (например "foto.png"); пусто = ищем collab.png/svg/webp/jpg/jpeg/gif
 function collabView(box) {
   const t0 = Date.parse(COLLAB.start);
   const nums = ["дней", "часов", "минут", "секунд"].map(l => { const n = h("span", {}, "00"); return {n, el:h("div", {class:"stat"}, n, l)}; });
@@ -211,6 +211,12 @@ function collabView(box) {
   tick(); clearInterval(timer); timer = setInterval(tick, 1000);
   document.title = "Коллаб — " + TITLE;
   box.append(h("div", {class:"stats cd"}, nums.map(x => x.el)));
+  // картинка над таймером лежит рядом с index.html; нет файла — нет и картинки
+  const files = COLLAB.img ? [COLLAB.img] : ICON_EXT.map(e => `collab.${e}`);
+  let i = 0; const im = new Image(); im.alt = ""; im.className = "cv-img";
+  im.onload = () => { if ($("app").classList.contains("v-collab")) box.prepend(im); };
+  im.onerror = () => { if (++i < files.length) im.src = files[i] + "?v=" + SITE_VERSION; };
+  im.src = files[0] + "?v=" + SITE_VERSION;
 }
 
 /* ---------- выбор достижений ---------- */
