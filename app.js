@@ -1,7 +1,7 @@
 "use strict";
 const SB_URL = "https://swdmjwgwripgpcnglhse.supabase.co";
 const SB_KEY = "sb_publishable_hv4OhCNL1n8A5pbs526FpQ_hX7o6xmb";
-const SITE_VERSION = "2.21";
+const SITE_VERSION = "2.21-1а";
 const TITLE = "Достижения DOORS: помощь с ачивками — DorsoTic";
 const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Владелец"};
 const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
@@ -167,7 +167,7 @@ function countUp(el, to) {
 const tile = (label, val) => { const n = h("span", {}, "0"); countUp(n, val); return h("div", {class:"stat"}, n, label); };
 
 /* ---------- обновление: The Candy Vault ---------- */
-const CV = {start:"2026-10-23T01:00:00+03:00", end:"2026-11-09T07:55:00+03:00"}; // время МСК (UTC+3)
+const CV = {start:"2026-10-22T21:00:00+03:00", end:"2026-11-09T07:55:00+03:00"}; // время МСК (UTC+3)
 function updateView(box) {
   const t0 = Date.parse(CV.start), t1 = Date.parse(CV.end);
   const nums = ["дней", "часов", "минут", "секунд"].map(l => { const n = h("span", {}, "00"); return {n, el:h("div", {class:"stat"}, n, l)}; });
@@ -200,7 +200,7 @@ function updateView(box) {
 }
 
 /* ---------- коллаб: только таймер до начала ---------- */
-const COLLAB = {start:"2026-10-24T00:00:00+03:00", img:""}; // время МСК (UTC+3); img — имя файла картинки над таймером (например "foto.png"); пусто = ищем collab.png/svg/webp/jpg/jpeg/gif
+const COLLAB = {start:"2026-10-26T00:00:00+03:00", img:""}; // время МСК (UTC+3); img — имя файла картинки над таймером (например "foto.png"); пусто = ищем collab.png/svg/webp/jpg/jpeg/gif
 function collabView(box) {
   const t0 = Date.parse(COLLAB.start);
   const nums = ["дней", "часов", "минут", "секунд"].map(l => { const n = h("span", {}, "00"); return {n, el:h("div", {class:"stat"}, n, l)}; });
