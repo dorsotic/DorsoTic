@@ -1,7 +1,7 @@
 "use strict";
 const SB_URL = "https://swdmjwgwripgpcnglhse.supabase.co";
 const SB_KEY = "sb_publishable_hv4OhCNL1n8A5pbs526FpQ_hX7o6xmb";
-const SITE_VERSION = "2.21-1а";
+const SITE_VERSION = "2.22-1";
 const TITLE = "Достижения DOORS: помощь с ачивками — DorsoTic";
 const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Владелец"};
 const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
@@ -139,6 +139,8 @@ async function go(v) {
   const full = String(v); v = full.split("/")[0]; FPATH = full.slice(v.length + 1);
   if (!ROUTES.includes(v)) { v = "home"; FPATH = ""; }
   if (v === "staff" && !me) v = "login";
+  if (v !== "forum") collabBack = false; // вернуть на «Коллаб» только сразу после входа через форум
+  else if (collabBack && (await db.auth.getSession()).data.session) { collabBack = false; return go("collab"); }
   document.getElementById("fbar")?.remove(); document.querySelector(".sheet-bd")?.remove(); document.body.classList.remove("lock");
   const box = h("div");
   $("app").className = (v === "staff" ? "wide " : "") + "v-" + v;
@@ -148,7 +150,7 @@ async function go(v) {
   window.scrollTo(0, 0); clearInterval(timer); document.title = TITLE;
   try {
     if (v === "home") await home(box); else if (v === "login") login(box); else if (v === "info") how(box);
-    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box); else if (v === "collab") collabView(box); else if (v === "market") await marketView(box);
+    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box); else if (v === "collab") await collabView(box); else if (v === "market") await marketView(box);
     else await staffView(box);
   } catch (e) { console.error(e); box.replaceChildren(h("h1", {}, "Ошибка"), h("p", {class:"sub"}, "Не удалось загрузить страницу. Обнови её.")); }
 }
@@ -199,12 +201,14 @@ function updateView(box) {
   );
 }
 
-/* ---------- коллаб: только таймер до начала ---------- */
+/* ---------- коллаб: таймер до старта, потом ежедневные промокоды (SQL: collab.sql) ---------- */
 const COLLAB = {start:"2026-10-26T00:00:00+03:00", img:""}; // время МСК (UTC+3); img — имя файла картинки над таймером (например "foto.png"); пусто = ищем collab.png/svg/webp/jpg/jpeg/gif
-function collabView(box) {
-  const t0 = Date.parse(COLLAB.start);
+let collabBack = false; // нажал «Войти» на «Коллабе»: после входа вернём его сюда
+const cName = x => x?.display_name || x?.username || "Игрок";
+function collabTimer(box, t0) {
   const nums = ["дней", "часов", "минут", "секунд"].map(l => { const n = h("span", {}, "00"); return {n, el:h("div", {class:"stat"}, n, l)}; });
   const tick = () => {
+    if (Date.now() >= t0) return go("collab"); // время пришло — открываем вкладку заново, уже с кодами
     const s = Math.max(0, Math.floor((t0 - Date.now()) / 1000)), v = [Math.floor(s / 86400), Math.floor(s % 86400 / 3600), Math.floor(s % 3600 / 60), s % 60];
     nums.forEach((x, i) => x.n.textContent = String(v[i]).padStart(2, "0"));
   };
@@ -217,6 +221,65 @@ function collabView(box) {
   im.onload = () => { if ($("app").classList.contains("v-collab")) box.prepend(im); };
   im.onerror = () => { if (++i < files.length) im.src = files[i] + "?v=" + SITE_VERSION; };
   im.src = files[0] + "?v=" + SITE_VERSION;
+}
+function collabRow(n, name, candies, mine) {
+  const top = n <= 3;
+  return h("div", {class:"tm cl-row" + (top ? " r" + n : "") + (mine ? " me" : "")},
+    h("div", {class:"av tmav"}, initial(name), h("em", {class:"rk" + (top ? "" : " pl")}, String(n))),
+    h("div", {class:"tmi"}, h("div", {class:"tmn"}, h("b", {}, name), mine ? h("span", {class:"badge"}, "ты") : null)),
+    h("div", {class:"cl-c"}, "🍬 " + candies));
+}
+async function collabView(box) {
+  const t0 = Date.parse(COLLAB.start);
+  if (Date.now() < t0) return collabTimer(box, t0);
+  document.title = "Коллаб — " + TITLE; box.className = "cl";
+  const { data:{ session } } = await db.auth.getSession(), user = session?.user || null;
+  const lb = h("div", {class:"tgrid cl-lb"}, h("p", {class:"empty"}, "Загрузка…"));
+  box.append(h("h1", {}, "Коллаб"), h("p", {class:"sub"}, "Вводи промокоды и копи конфеты 🍬"));
+  let num = null, st = null, myName = null, shown = false;
+  const setDone = d => { if (!st) return; st.textContent = d ? "✓ Выполнено" : "Не выполнено"; st.classList.toggle("ok", !!d); };
+  const refresh = async () => {
+    const [lr, mr] = await Promise.all([db.rpc("collab_leaderboard"), user ? db.rpc("collab_me") : null]);
+    if (!box.isConnected) return;
+    const info = mr?.data;
+    if (info && num) { if (shown) num.textContent = String(info.candies); else { countUp(num, info.candies); shown = true; } setDone(info.task_done); }
+    if (lr.error) return lb.replaceChildren(h("p", {class:"empty"}, "Не удалось загрузить лидеров."));
+    const rows = lr.data || [];
+    if (!rows.length) return lb.replaceChildren(h("p", {class:"empty"}, "Пока никого. Введи код первым!"));
+    const kids = rows.map((x, i) => collabRow(i + 1, cName(x), x.candies, x.mine));
+    if (info?.rank && !rows.some(x => x.mine)) { // игрок вне топ-20: показываем его место под списком
+      if (!myName) { const { data:pr } = await db.from("forum_profiles").select("username,display_name").eq("id", user.id).maybeSingle(); myName = cName(pr); }
+      kids.push(h("div", {class:"meta cl-gap"}, "⋯"), collabRow(info.rank, myName, info.candies, true));
+    }
+    lb.replaceChildren(...kids);
+  };
+  if (!user) box.append(h("div", {class:"door cl-auth"}, h("p", {}, "Чтобы вводить коды, зарегистрируйся или войди"),
+    h("button", {class:"go", onclick:() => { collabBack = true; go("forum"); }}, "Войти или зарегистрироваться")));
+  else {
+    num = h("span", {}, "0"); st = h("span", {class:"cl-st"}, "Не выполнено");
+    const inp = h("input", {maxlength:16, autocomplete:"off", autocapitalize:"characters", spellcheck:"false"}), btn = h("button", {class:"go"}, "Ввести код");
+    const redeem = async () => {
+      const v = inp.value.trim(); if (!v) return toast("Введи промокод.", 1);
+      btn.disabled = true;
+      try {
+        const { data, error } = await db.rpc("collab_redeem", {p_code:v});
+        if (error) return toast(error.code === "P0001" ? error.message : "Не удалось ввести код. Попробуй позже.", 1);
+        inp.value = ""; num.textContent = String(data.candies); shown = true;
+        if (data.kind === "personal") setDone(true);
+        toast((data.kind === "personal" ? "Задание выполнено! " : "Код принят! ") + `+${data.reward} 🍬`);
+        refresh();
+      } finally { btn.disabled = false; }
+    };
+    btn.onclick = redeem; inp.onkeydown = e => { if (e.key === "Enter") redeem(); };
+    box.append(
+      h("div", {class:"stats"}, h("div", {class:"stat"}, num, "🍬 конфет")),
+      h("div", {class:"door"}, fld("Введи промокод", inp), btn),
+      h("div", {class:"door"}, h("h2", {}, "Ежедневное задание"),
+        h("p", {class:"meta"}, "Открой 10 коробок кошатины в боте, напиши боту /start и введи полученный код."), st,
+        h("p", {class:"meta"}, "5 общих кодов дня бот публикует в Telegram. Каждый можно ввести один раз. Каждый код действует 15 минут с момента выдачи.")));
+  }
+  box.append(h("h2", {class:"cl-h"}, "Лидеры"), lb);
+  refresh();
 }
 
 /* ---------- выбор достижений ---------- */
