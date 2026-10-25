@@ -531,7 +531,22 @@ header nav{padding-top:.55rem;padding-bottom:.55rem}
 .v-collab .stats.cd{width:100%;margin:0}
 .v-collab .stats.cd .stat{padding:1.1rem .3rem;border-radius:22px;border-color:rgba(255,125,26,.5);background:linear-gradient(160deg,rgba(255,125,26,.18),rgba(60,20,90,.6));box-shadow:0 0 22px rgba(255,125,26,.18)}
 .v-collab .stats.cd .stat span{font-size:2.8rem;background:linear-gradient(180deg,#ffd08a,#e8721c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 8px rgba(255,125,26,.4))}
-@media(max-width:820px){.v-collab .stats.cd .stat span{font-size:2rem}.hero:before,.hero:after{content:none!important;display:none!important}
+@media(max-width:820px){.v-collab .stats.cd .stat span{font-size:2rem}.hero:before,.hero:after{content:none!important;display:none!important}}
+/* «Коллаб» после старта: конфеты, ввод кода, лидеры */
+.v-collab>div.cl{justify-content:flex-start;align-items:stretch;gap:.8rem;min-height:0}
+.cl>h1{margin:.2rem 0 0;text-align:center}.cl>.sub{margin:0}
+.cl .stats{grid-template-columns:1fr;margin:0}
+.cl .stats .stat{padding:1rem .5rem;border-radius:22px;border-color:rgba(255,125,26,.5);background:linear-gradient(160deg,rgba(255,125,26,.18),rgba(60,20,90,.6));box-shadow:0 0 22px rgba(255,125,26,.18);font-size:.9rem}
+.cl .stats .stat span{font-size:3.2rem;background:linear-gradient(180deg,#ffd08a,#e8721c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 8px rgba(255,125,26,.4))}
+.cl .door h2{margin:0 0 .3rem;font-size:1.2rem}.cl .door p{margin:.3rem 0 0}.cl-auth p{text-align:center}
+.cl-st{display:inline-block;margin-top:.5rem;padding:.2rem .75rem;border:1px solid var(--line);border-radius:999px;font-size:.82rem;color:var(--muted)}
+.cl-st.ok{color:var(--ok);border-color:var(--ok)}
+.cl-h{margin:.8rem 0 0}.cl-lb{grid-template-columns:1fr}
+#app.v-collab .tm.cl-row{cursor:default;animation:none}
+.tm.cl-row .rk.pl{background:#3a2a4d;color:var(--muted)}
+.tm.cl-row.me{border-color:rgba(255,155,47,.75);background:linear-gradient(145deg,rgba(255,125,26,.18),rgba(32,18,40,.92))}
+.cl-c{flex:none;color:var(--gold);font-size:1.05rem}.cl-gap{text-align:center;margin:-.2rem 0}
+@media(hover:hover){.tm.cl-row:hover{transform:none;box-shadow:0 8px 24px rgba(0,0,0,.2);border-color:rgba(255,255,255,.08)}.tm.cl-row.me:hover{border-color:rgba(255,155,47,.75)}}
 </style>
 </head>
 <body>
