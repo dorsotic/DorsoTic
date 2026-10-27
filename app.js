@@ -635,7 +635,14 @@ async function tabProfile(box) {
     const [{ data: s, error }, { data: rv }] = await Promise.all([db.rpc("staff_stats", {p_uid:uid}), db.from("reviews").select("id,stars,comment,created_at").eq("staff_id", uid).order("created_at", {ascending:false}).limit(10)]);
     if (error || !s) { out.replaceChildren(h("p", {class:"empty"}, "Нет данных.")); return; }
     const n = (l, v) => h("div", {class:"stat"}, h("span", {}, String(v)), l);
-    out.replaceChildren(h("h2", {}, "Закрытых заявок"), h("div", {class:"stats"}, n("Сегодня", s.day), n("Неделя", s.week), n("Месяц", s.month), n("Всё время", s.total)),
+    const target = profiles[uid], canFire = me.role === "owner" && uid !== me.id && target && target.role !== "owner";
+    const fireBtn = canFire ? h("div", {class:"acts"}, h("button", {class:"ghost", onclick:async () => {
+      if (await modal({title:"Уволить " + target.nickname + "?", text:`${ROLE[target.role]} потеряет доступ к панели, аккаунт будет удалён. Это нельзя отменить.`, ok:"Уволить"}) === null) return;
+      const { error: fe } = await db.functions.invoke("delete-staff", {body:{user_id:uid}});
+      if (fe) { let t = "Не удалось уволить сотрудника."; try { t = (await fe.context.json()).error || t; } catch {} return toast(t, 1); }
+      toast(target.nickname + " уволен(а)."); TEAM = null; await loadMe(); uid = me.id; fillSel(); draw(); drawFoot();
+    }}, "Уволить сотрудника")) : null;
+    out.replaceChildren(...(fireBtn ? [fireBtn] : []), h("h2", {}, "Закрытых заявок"), h("div", {class:"stats"}, n("Сегодня", s.day), n("Неделя", s.week), n("Месяц", s.month), n("Всё время", s.total)),
       h("h2", {}, "Отзывы"), s.avg ? h("div", {}, stars(s.avg), ` ${s.avg} из 5 · всего: ${s.reviews}`) : h("p", {class:"empty"}, "Отзывов пока нет."),
       ...(rv || []).map(r => h("div", {class:"card closed"}, stars(r.stars), r.comment ? h("div", {}, r.comment) : null, h("div", {class:"meta"}, fmt(r.created_at)),
         me.role === "owner" ? h("div", {class:"acts"}, h("button", {class:"ghost", onclick:async () => {
@@ -643,7 +650,9 @@ async function tabProfile(box) {
           const { error: e } = await db.from("reviews").delete().eq("id", r.id); if (e) return toast("Не удалось удалить отзыв.", 1); toast("Отзыв удалён."); draw(); drawFoot();
         }}, "Удалить отзыв")) : null)));
   };
-  if (me.role === "owner") { const sel = h("select", {onchange:e => { uid = e.target.value; draw(); }}, Object.values(profiles).map(p => h("option", {value:p.id}, `${p.nickname} · ${ROLE[p.role]}`))); sel.value = me.id; box.append(fld("Сотрудник", sel)); }
+  const sel = h("select", {onchange:e => { uid = e.target.value; draw(); }});
+  const fillSel = () => { sel.replaceChildren(...Object.values(profiles).map(p => h("option", {value:p.id}, `${p.nickname} · ${ROLE[p.role]}`))); sel.value = uid; };
+  if (me.role === "owner") { fillSel(); box.append(fld("Сотрудник", sel)); }
   const pw = h("input", {type:"password", placeholder:"Новый пароль, от 10 символов", autocomplete:"new-password"});
   const pwBtn = h("button", {class:"ghost", onclick:async () => {
     if (pw.value.length < 10) return toast("Пароль: минимум 10 символов.", 1);
