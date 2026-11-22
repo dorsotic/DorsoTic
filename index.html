@@ -483,6 +483,57 @@ header nav button.off:hover span:first-child{transform:none}
 @media(hover:hover){#fbar button:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.55),0 0 22px rgba(255,125,26,.15)}}
 @media(prefers-reduced-motion:reduce){body:after,.logo,.go,header nav button.cur span:first-child,.tp{animation:none!important}}
 
+
+/* ===== v6: больше движения, стекло, светящиеся рамки ===== */
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes spin{to{--ang:360deg}}
+@keyframes navIn{from{opacity:0;transform:translateY(-10px) scale(.85)}to{opacity:1;transform:none}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg)}60%{transform:rotate(10deg)}}
+@keyframes mote{0%{transform:translate3d(0,0,0) scale(.6);opacity:0}12%{opacity:.85}88%{opacity:.45}100%{transform:translate3d(var(--dx),-108vh,0) scale(1.1);opacity:0}}
+
+/* прогресс прокрутки и шапка при прокрутке */
+header:before{content:"";position:absolute;left:0;top:0;height:2px;width:calc(var(--sp,0)*100%);pointer-events:none;background:linear-gradient(90deg,#ff9b2f,#ff6b6b);box-shadow:0 0 10px rgba(255,125,26,.7);transition:width .12s linear}
+header{transition:background .3s,box-shadow .3s}
+body.scrolled header{background:rgba(9,5,14,.9);box-shadow:0 12px 40px rgba(0,0,0,.45)}
+
+/* фон: пылинки и свет за курсором */
+.motes{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.motes i{position:absolute;bottom:-12px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,rgba(255,200,125,.95),rgba(255,140,40,0) 70%);opacity:0;animation:mote var(--d) linear var(--dl) infinite}
+.cglow{position:fixed;left:0;top:0;z-index:-1;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,155,47,.12),transparent 65%);opacity:0;transition:opacity .6s;will-change:transform}
+.cglow.on{opacity:1}
+
+/* заголовки */
+h1{background:linear-gradient(100deg,#ff9b2f 25%,#ffe9c8 50%,#ff9b2f 75%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 18px rgba(255,125,26,.3));animation:sheen 9s linear infinite}
+#app>div>h1{animation:rise .6s var(--ease) backwards,sheen 9s linear infinite}
+.v-home .stats .stat span,.v-update .stats.cd .stat span{background:linear-gradient(180deg,#ffe0a8,#ff8a3d 70%,#ff6b6b);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* стеклянные карточки со светящейся рамкой */
+.card,.door,.tm,.stat,.hero{position:relative}
+.door,.hero,.tm{backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2)}
+.door:after,.hero:after,.tm:after{content:"";position:absolute;inset:-1px;padding:1px;border-radius:inherit;pointer-events:none;background:linear-gradient(135deg,rgba(255,179,71,.42),rgba(255,255,255,.05) 40%,rgba(255,107,107,.22));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+@media(hover:hover){
+  .card:before,.door:before,.tm:before,.stat:before,.hero:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),rgba(255,179,71,.14),transparent 60%)}
+  .card:hover:before,.door:hover:before,.tm:hover:before,.stat:hover:before,.hero:hover:before{opacity:1}
+  .door:hover:after,.tm:hover:after{background:conic-gradient(from var(--ang),rgba(255,255,255,.06),rgba(255,179,71,.95) 12%,rgba(255,255,255,.06) 32%,rgba(255,255,255,.06));animation:spin 3.2s linear infinite}
+  .tm:hover,.stat:hover{transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-3px);transition:transform .12s ease-out,border-color .25s,box-shadow .25s}
+}
+
+/* кнопки: новый градиент и реакции */
+.go,.fbtn:not(.on),.acts>button:not(.ghost):not(.bad):not(.hold){background:linear-gradient(135deg,#ffc266,#ff8a3d 55%,#e8541c)}
+.fbtn.on{animation:pop .4s var(--spring)}
+.lk{text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .3s var(--ease)}
+.lk:hover{background-size:100% 1px}
+label{transition:color .2s}label:focus-within{color:#ffd9a8}
+@media(hover:hover){#fbar button:hover .ico{animation:wiggle .5s ease}}
+
+/* меню: плавающая подсветка активной вкладки и появление */
+header nav{position:relative}
+header nav button{z-index:1;animation:navIn .55s var(--spring) backwards}
+header nav button:nth-of-type(1){animation-delay:.02s}header nav button:nth-of-type(2){animation-delay:.08s}header nav button:nth-of-type(3){animation-delay:.14s}header nav button:nth-of-type(4){animation-delay:.2s}header nav button:nth-of-type(5){animation-delay:.26s}header nav button:nth-of-type(6){animation-delay:.32s}
+header nav button:last-of-type{margin-right:auto}
+.nav-ind{position:absolute;z-index:0;left:0;top:0;border-radius:18px;pointer-events:none;opacity:0;background:linear-gradient(150deg,rgba(255,155,47,.3),rgba(255,107,107,.1));border:1px solid rgba(255,155,47,.6);box-shadow:0 0 18px rgba(255,125,26,.24);transition:transform .5s var(--spring),width .45s var(--ease),height .45s var(--ease),opacity .3s}
+header nav.has-ind button.cur{background:none;border-color:transparent;box-shadow:none}
+@media(prefers-reduced-motion:reduce){.motes,.cglow{display:none}h1,#app>div>h1{animation:none!important}.tm:hover,.stat:hover{transform:none}}
 </style>
 </head>
 <body>
