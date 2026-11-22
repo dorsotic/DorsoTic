@@ -3,12 +3,24 @@
    Весь пользовательский текст выводится только как текст (без innerHTML). */
 const IMG_RE = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|webp)$/, SEL = "id,parent_id,body,image_path,created_at,author,forum_profiles!posts_author_fkey(username,display_name,avatar_path),likes(count),replies:posts!parent_id(count)";
 const FTOPICS = [
-  {k:"general", l:"Общее", e:"💬"}, {k:"ach", l:"Достижения", e:"🏆"}, {k:"guide", l:"Гайды", e:"📖"}, {k:"q", l:"Вопросы", e:"❓"},
-  {k:"mobs", l:"Монстры", e:"👁"}, {k:"news", l:"Новости", e:"📰"}, {k:"ideas", l:"Идеи", e:"💡"}, {k:"off", l:"Оффтоп", e:"🎲"}
+  {k:"general", l:"Общее"}, {k:"ach", l:"Достижения"}, {k:"guide", l:"Гайды"}, {k:"q", l:"Вопросы"},
+  {k:"mobs", l:"Монстры"}, {k:"news", l:"Новости"}, {k:"ideas", l:"Идеи"}, {k:"off", l:"Оффтоп"}
 ];
 /* тема хранится в начале текста поста как #Тема, так что менять базу не нужно */
 const TP_RE = new RegExp("^#(" + FTOPICS.map(t => t.l).join("|") + ")(?:\\s+|$)");
 const splitTopic = b => { b = b || ""; const m = TP_RE.exec(b); return m ? {t:FTOPICS.find(t => t.l === m[1]), text:b.slice(m[0].length)} : {t:null, text:b}; };
+/* свой значок у каждой темы: положите файл icons/topics/<ключ>.png (или svg, webp, jpg, gif);
+   ключи: all, general, ach, guide, q, mobs, news, ideas, off. Пока файла нет, показывается «#» */
+const TI = {};
+function topicIcon(t) {
+  const n = t.k || "all", s = h("span", {class:"ticon", "aria-hidden":"true"}, t.k ? "#" : "✦");
+  const show = src => { const im = new Image(); im.alt = ""; im.src = src; s.replaceChildren(im); };
+  if (TI[n]) { show(TI[n]); return s; } if (TI[n] === false) return s;
+  let i = 0; const probe = new Image();
+  probe.onload = () => { TI[n] = probe.src; show(probe.src); };
+  probe.onerror = () => { if (++i < ICON_EXT.length) probe.src = `icons/topics/${n}.${ICON_EXT[i]}`; else TI[n] = false; };
+  probe.src = `icons/topics/${n}.${ICON_EXT[0]}`; return s;
+}
 const mbf = b => (b / 1048576).toFixed(1);
 const bad = m => Object.assign(new Error(m), {code:"P0001"});
 const fe = (e, d) => e?.code === "P0001" ? e.message : /row-level|exceed|too large|payload/i.test(e?.message || "") ? "Лимит хранилища или размер файла превышен." : d;
@@ -186,7 +198,7 @@ function sheet(parent, done, topic0) {
   const ta = h("textarea", {maxlength:MAX, placeholder:parent ? "Напиши комментарий" : "Что нового?", "aria-label":"Текст"}); ta.value = fdraft[key] || "";
   const cnt = h("span", {class:"meta"}), msg = h("div", {class:"msg err", role:"alert"});
   const tpRow = parent ? null : h("div", {class:"tpick", role:"radiogroup", "aria-label":"Тема"}, ...FTOPICS.map(t => h("button", {type:"button", role:"radio", class:"tp" + (t.k === tpk ? " on" : ""), "aria-checked":String(t.k === tpk),
-    onclick:e => { tpk = t.k; e.currentTarget.parentNode.querySelectorAll(".tp").forEach(b => { const on = b === e.currentTarget; b.classList.toggle("on", on); b.setAttribute("aria-checked", String(on)); }); }}, h("span", {"aria-hidden":"true"}, t.e), t.l)));
+    onclick:e => { tpk = t.k; e.currentTarget.parentNode.querySelectorAll(".tp").forEach(b => { const on = b === e.currentTarget; b.classList.toggle("on", on); b.setAttribute("aria-checked", String(on)); }); }}, topicIcon(t), t.l)));
   const file = h("input", {type:"file", accept:"image/jpeg,image/png,image/webp", style:"display:none"});
   const img = h("img", {alt:"Выбранная картинка"}), prev = h("div", {class:"prev", style:"display:none"}, img);
   const pub = h("button", {class:"go pub", type:"button"}, parent ? "Ответить" : "Опубликовать");
@@ -245,7 +257,7 @@ function postCard(p, liked, c) {
   }}, ic("ban")));
   const goP = e => { e.stopPropagation(); c.prof(u); }, av = avatar(pr, "avlink"); av.onclick = goP;
   const im = img ? h("img", {src:img, alt:"Изображение", loading:"lazy"}) : null; if (im) im.onclick = e => { e.stopPropagation(); lightbox(img); };
-  const tp = splitTopic(p.body), text = tp.text, tchip = tp.t ? h("button", {class:"tchip", type:"button", "aria-label":"Тема: " + tp.t.l, onclick:e => { e.stopPropagation(); c.topic && c.topic(tp.t.k); }}, h("span", {"aria-hidden":"true"}, tp.t.e), tp.t.l) : null;
+  const tp = splitTopic(p.body), text = tp.text, tchip = tp.t ? h("button", {class:"tchip", type:"button", "aria-label":"Тема: " + tp.t.l, onclick:e => { e.stopPropagation(); c.topic && c.topic(tp.t.k); }}, topicIcon(tp.t), tp.t.l) : null;
   return h("div", {class:"tw-row" + (c.big ? " big" : "") + (c.anc ? " anc" : ""), onclick:() => c.open && c.open(p)}, h("div", {class:"avcol"}, av),
     h("div", {class:"tw-main"}, h("div", {class:"tw-top"}, h("b", {class:"nmlink", onclick:goP}, nameOf(pr)), role ? h("span", {class:"badge"}, ROLE[role] || role) : null, h("span", {class:"meta"}, "@" + u + " · " + ago(p.created_at))),
       tchip, text ? h("div", {class:"tw-txt"}, text) : null, im, act));
@@ -317,8 +329,8 @@ async function forum(box) {
     fcur = showFeed; bell = null;
     const tabs = h("div", {class:"ftabs"}, ...[["all", "Все"], ["sub", "Подписки"]].map(([k, l]) => h("button", {type:"button", class:tab === k ? "on" : "", onclick:() => { if (tab !== k) { tab = k; history.replaceState(history.state, "", feedHash()); showFeed(); } }}, l)));
     const badge = h("span", {class:"dot", style:"display:none"});
-    const tbar = h("div", {class:"topics", role:"tablist", "aria-label":"Темы"}, ...[{k:"", l:"Все темы", e:"✦"}, ...FTOPICS].map((t, i) => { const on = topic === t.k;
-      const b = h("button", {type:"button", role:"tab", class:"tp" + (on ? " on" : ""), "aria-selected":String(on), onclick:() => { if (topic === t.k) return; topic = t.k; history.replaceState(history.state, "", feedHash()); showFeed(); }}, h("span", {"aria-hidden":"true"}, t.e), t.l);
+    const tbar = h("div", {class:"topics", role:"tablist", "aria-label":"Темы"}, ...[{k:"", l:"Все темы"}, ...FTOPICS].map((t, i) => { const on = topic === t.k;
+      const b = h("button", {type:"button", role:"tab", class:"tp" + (on ? " on" : ""), "aria-selected":String(on), onclick:() => { if (topic === t.k) return; topic = t.k; history.replaceState(history.state, "", feedHash()); showFeed(); }}, topicIcon(t), t.l);
       b.style.setProperty("--i", i); return b; }));
     top.replaceChildren(h("div", {class:"ftop"}, tabs,
       h("button", {class:"ib sq", type:"button", "aria-label":"Поиск людей", onclick:() => to(showSearch, "s")}, ic("search")),
@@ -380,11 +392,6 @@ async function forum(box) {
     const parts = [h("div", {class:"pcard"}, banner(pr), h("div", {class:"phead"}, avatar(pr, "lg"), act),
       h("div", {class:"pinfo"}, h("h2", {}, nameOf(pr), role ? h("span", {class:"badge"}, ROLE[role] || role) : null), h("div", {class:"meta"}, "@" + pr.username),
         pr.bio ? h("div", {class:"pbio"}, pr.bio) : null, h("div", {class:"meta", style:"margin-top:.4rem"}, "На форуме с " + new Date(pr.created_at).toLocaleDateString("ru-RU", {month:"long", year:"numeric"})), stats))];
-    if (self) {
-      const bar = h("i"), txt = h("div", {class:"meta"});
-      fRefresh = async () => { const { data } = await db.rpc("forum_usage"); if (!data) return; txt.textContent = `Хранилище: ${mbf(data.used)} из ${mbf(data.limit)} МБ`; bar.style.width = Math.min(100, data.used / data.limit * 100) + "%"; }; fRefresh();
-      parts.push(h("div", {class:"usage"}, txt, h("div", {class:"bar"}, bar), h("div", {class:"meta"}, "Лимиты: 100 МБ, 40 сообщений и 20 картинок в сутки, пауза 15 секунд.")));
-    }
     loadTab(); show(...parts, ptabs, lst);
   }
 
