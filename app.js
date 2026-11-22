@@ -694,3 +694,49 @@ $("logo").onclick = () => go("home");
   const ob = new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(mark)));
   ob.observe($("app"), {childList:true, subtree:true}); ob.observe(document.body, {childList:true});
 })();
+
+/* ---------- v6: больше движения ---------- */
+(function () {
+  const root = document.documentElement, nav = $("nav");
+  /* прогресс прокрутки и состояние шапки */
+  let tk = false;
+  const onScroll = () => { if (tk) return; tk = true; requestAnimationFrame(() => { tk = false; const m = root.scrollHeight - innerHeight; root.style.setProperty("--sp", m > 0 ? Math.min(1, scrollY / m).toFixed(4) : 0); document.body.classList.toggle("scrolled", scrollY > 8); }); };
+  addEventListener("scroll", onScroll, {passive:true}); onScroll();
+  /* плавающая подсветка активной вкладки меню */
+  const ind = h("span", {class:"nav-ind", "aria-hidden":"true"}); let first = true, pr = 0;
+  const place = () => {
+    pr = 0; if (ind.parentNode !== nav) nav.append(ind);
+    const cur = nav.querySelector("button.cur"); if (!cur) { ind.style.opacity = "0"; return; }
+    if (first) ind.style.transition = "none";
+    ind.style.opacity = "1"; ind.style.width = cur.offsetWidth + "px"; ind.style.height = cur.offsetHeight + "px"; ind.style.transform = `translate(${cur.offsetLeft}px,${cur.offsetTop}px)`;
+    if (!nav.classList.contains("has-ind")) nav.classList.add("has-ind");
+    if (first) { first = false; void ind.offsetWidth; ind.style.transition = ""; }
+  };
+  const sched = () => { if (!pr) pr = requestAnimationFrame(place); };
+  new MutationObserver(sched).observe(nav, {childList:true, subtree:true, attributes:true, attributeFilter:["class"]});
+  addEventListener("resize", sched); addEventListener("load", sched); sched();
+  if (reduceMotion()) return;
+  /* пылинки на фоне */
+  const mo = h("div", {class:"motes", "aria-hidden":"true"});
+  for (let i = 0; i < 16; i++) { const p = h("i"), r = Math.random; p.style.cssText = `--x:${(r() * 100).toFixed(1)}%;--s:${(3 + r() * 5).toFixed(1)}px;--d:${(14 + r() * 16).toFixed(1)}s;--dl:${(-r() * 24).toFixed(1)}s;--dx:${((r() - .5) * 140).toFixed(0)}px`; mo.append(p); }
+  document.body.append(mo);
+  if (!matchMedia("(hover:hover) and (pointer:fine)").matches) return;
+  /* свет за курсором */
+  const cg = h("div", {class:"cglow", "aria-hidden":"true"}); document.body.append(cg);
+  let tx = 0, ty = 0, cx = 0, cy = 0, run = 0;
+  const loop = () => { cx += (tx - cx) * .12; cy += (ty - cy) * .12; cg.style.transform = `translate3d(${cx.toFixed(1)}px,${cy.toFixed(1)}px,0)`; run = Math.abs(tx - cx) + Math.abs(ty - cy) > .5 ? requestAnimationFrame(loop) : 0; };
+  /* блик на карточках и наклон плиток */
+  let raf = 0, ev = null;
+  document.addEventListener("pointermove", e => {
+    if (e.pointerType === "touch") return; ev = e; tx = e.clientX; ty = e.clientY; cg.classList.add("on"); if (!run) run = requestAnimationFrame(loop);
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0; const t = ev.target; if (!t.closest) return;
+      const g = t.closest(".card,.door,.tm,.stat,.hero");
+      if (g) { const r = g.getBoundingClientRect(); g.style.setProperty("--mx", (ev.clientX - r.left) + "px"); g.style.setProperty("--my", (ev.clientY - r.top) + "px"); }
+      const tl = t.closest(".tm,.stat");
+      if (tl) { const r = tl.getBoundingClientRect(); tl.style.setProperty("--ry", (((ev.clientX - r.left) / r.width - .5) * 8).toFixed(2) + "deg"); tl.style.setProperty("--rx", (-((ev.clientY - r.top) / r.height - .5) * 8).toFixed(2) + "deg"); }
+    });
+  }, {passive:true});
+  document.addEventListener("pointerleave", () => cg.classList.remove("on"));
+})();
