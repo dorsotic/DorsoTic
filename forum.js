@@ -2,6 +2,13 @@
 /* Форум DorsoTic. Использует db, h, fld, toast, modal, ago, me, ROLE, go из app.js.
    Весь пользовательский текст выводится только как текст (без innerHTML). */
 const IMG_RE = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|webp)$/, SEL = "id,parent_id,body,image_path,created_at,author,forum_profiles!posts_author_fkey(username,display_name,avatar_path),likes(count),replies:posts!parent_id(count)";
+const FTOPICS = [
+  {k:"general", l:"Общее", e:"💬"}, {k:"ach", l:"Достижения", e:"🏆"}, {k:"guide", l:"Гайды", e:"📖"}, {k:"q", l:"Вопросы", e:"❓"},
+  {k:"mobs", l:"Монстры", e:"👁"}, {k:"news", l:"Новости", e:"📰"}, {k:"ideas", l:"Идеи", e:"💡"}, {k:"off", l:"Оффтоп", e:"🎲"}
+];
+/* тема хранится в начале текста поста как #Тема, так что менять базу не нужно */
+const TP_RE = new RegExp("^#(" + FTOPICS.map(t => t.l).join("|") + ")(?:\\s+|$)");
+const splitTopic = b => { b = b || ""; const m = TP_RE.exec(b); return m ? {t:FTOPICS.find(t => t.l === m[1]), text:b.slice(m[0].length)} : {t:null, text:b}; };
 const mbf = b => (b / 1048576).toFixed(1);
 const bad = m => Object.assign(new Error(m), {code:"P0001"});
 const fe = (e, d) => e?.code === "P0001" ? e.message : /row-level|exceed|too large|payload/i.test(e?.message || "") ? "Лимит хранилища или размер файла превышен." : d;
@@ -172,22 +179,24 @@ function editProfile(mine, done) {
 }
 
 /* ---------- окно написания (выезжает снизу) ---------- */
-function sheet(parent, done) {
-  const key = parent || "root", bd = h("div", {class:"sheet-bd"}); let url = null;
+function sheet(parent, done, topic0) {
+  const key = parent || "root", bd = h("div", {class:"sheet-bd"}), MAX = parent ? 500 : 480; let url = null, tpk = topic0 || "general";
   const close = () => { fdraft[key] = ta.value; if (url) URL.revokeObjectURL(url); document.removeEventListener("keydown", esc); bd.remove(); };
   const esc = e => { if (e.key === "Escape") close(); };
-  const ta = h("textarea", {maxlength:500, placeholder:parent ? "Напиши комментарий" : "Что нового?", "aria-label":"Текст"}); ta.value = fdraft[key] || "";
+  const ta = h("textarea", {maxlength:MAX, placeholder:parent ? "Напиши комментарий" : "Что нового?", "aria-label":"Текст"}); ta.value = fdraft[key] || "";
   const cnt = h("span", {class:"meta"}), msg = h("div", {class:"msg err", role:"alert"});
+  const tpRow = parent ? null : h("div", {class:"tpick", role:"radiogroup", "aria-label":"Тема"}, ...FTOPICS.map(t => h("button", {type:"button", role:"radio", class:"tp" + (t.k === tpk ? " on" : ""), "aria-checked":String(t.k === tpk),
+    onclick:e => { tpk = t.k; e.currentTarget.parentNode.querySelectorAll(".tp").forEach(b => { const on = b === e.currentTarget; b.classList.toggle("on", on); b.setAttribute("aria-checked", String(on)); }); }}, h("span", {"aria-hidden":"true"}, t.e), t.l)));
   const file = h("input", {type:"file", accept:"image/jpeg,image/png,image/webp", style:"display:none"});
   const img = h("img", {alt:"Выбранная картинка"}), prev = h("div", {class:"prev", style:"display:none"}, img);
   const pub = h("button", {class:"go pub", type:"button"}, parent ? "Ответить" : "Опубликовать");
-  const upd = () => { cnt.textContent = `${ta.value.length}/500`; pub.disabled = !ta.value.trim() && !file.files[0]; };
+  const upd = () => { cnt.textContent = `${ta.value.length}/${MAX}`; pub.disabled = !ta.value.trim() && !file.files[0]; };
   const clearImg = () => { file.value = ""; if (url) URL.revokeObjectURL(url); url = null; prev.style.display = "none"; upd(); };
   prev.append(h("button", {class:"ib x", type:"button", "aria-label":"Убрать картинку", onclick:clearImg}, ic("close")));
   file.onchange = () => { const f = file.files[0]; if (!f) return clearImg(); if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(f); img.src = url; prev.style.display = ""; upd(); };
   ta.oninput = upd;
   pub.onclick = async () => {
-    msg.textContent = ""; const body = ta.value.trim(), f = file.files[0]; if (!body && !f) return; pub.disabled = true; let path = null;
+    msg.textContent = ""; const txt = ta.value.trim(), f = file.files[0]; if (!txt && !f) return; const body = parent ? txt : "#" + FTOPICS.find(t => t.k === tpk).l + (txt ? " " + txt : ""); pub.disabled = true; let path = null;
     try {
       if (f) { const blob = await shrink(f); path = `${fu.id}/${crypto.randomUUID()}.jpg`; const { error } = await db.storage.from("forum").upload(path, blob, {contentType:"image/jpeg", upsert:false}); if (error) { path = null; throw error; } }
       const { error } = await db.from("posts").insert({author:fu.id, parent_id:parent || null, body, image_path:path});
@@ -198,7 +207,7 @@ function sheet(parent, done) {
   bd.onclick = e => { if (e.target === bd) close(); };
   document.addEventListener("keydown", esc);
   bd.append(h("div", {class:"sheet", role:"dialog", "aria-label":"Новое сообщение"}, h("div", {class:"grab"}),
-    h("div", {class:"sh-top"}, h("button", {class:"ib", type:"button", "aria-label":"Закрыть", onclick:close}, ic("close")), pub), ta, prev, msg,
+    h("div", {class:"sh-top"}, h("button", {class:"ib", type:"button", "aria-label":"Закрыть", onclick:close}, ic("close")), pub), tpRow, ta, prev, msg,
     h("div", {class:"tools"}, h("button", {class:"ib", type:"button", "aria-label":"Добавить картинку", onclick:() => file.click()}, ic("image")), file, h("span", {style:"flex:1"}), cnt)));
   document.body.append(bd); upd(); ta.focus();
 }
@@ -236,16 +245,17 @@ function postCard(p, liked, c) {
   }}, ic("ban")));
   const goP = e => { e.stopPropagation(); c.prof(u); }, av = avatar(pr, "avlink"); av.onclick = goP;
   const im = img ? h("img", {src:img, alt:"Изображение", loading:"lazy"}) : null; if (im) im.onclick = e => { e.stopPropagation(); lightbox(img); };
+  const tp = splitTopic(p.body), text = tp.text, tchip = tp.t ? h("button", {class:"tchip", type:"button", "aria-label":"Тема: " + tp.t.l, onclick:e => { e.stopPropagation(); c.topic && c.topic(tp.t.k); }}, h("span", {"aria-hidden":"true"}, tp.t.e), tp.t.l) : null;
   return h("div", {class:"tw-row" + (c.big ? " big" : "") + (c.anc ? " anc" : ""), onclick:() => c.open && c.open(p)}, h("div", {class:"avcol"}, av),
     h("div", {class:"tw-main"}, h("div", {class:"tw-top"}, h("b", {class:"nmlink", onclick:goP}, nameOf(pr)), role ? h("span", {class:"badge"}, ROLE[role] || role) : null, h("span", {class:"meta"}, "@" + u + " · " + ago(p.created_at))),
-      p.body ? h("div", {class:"tw-txt"}, p.body) : null, im, act));
+      tchip, text ? h("div", {class:"tw-txt"}, text) : null, im, act));
 }
 
 /* ---------- страница форума ---------- */
 async function forum(box) {
   const { data: { session } } = await db.auth.getSession(); fu = session?.user || null;
   const rl = await db.rpc("staff_public"); fRoles = Object.fromEntries((rl.data || []).map(x => [x.nickname, x.role]));
-  let mine = null, tab = "all", bell = null;
+  let mine = null, tab = "all", bell = null, topic = "";
   const loadMine = async () => { if (fu) { const { data } = await db.from("forum_profiles").select(MY).eq("id", fu.id).maybeSingle(); mine = data; } };
   await loadMine(); $("app").classList.add("tw");
   const top = h("div"), wrap = h("div", {class:"vw"});
@@ -253,13 +263,15 @@ async function forum(box) {
   else if (!mine) box.append(h("div", {class:"door"}, h("p", {}, "Профиль форума не найден. Выйди и войди снова."), h("button", {onclick:() => db.auth.signOut()}, "Выйти")));
   box.append(top, wrap);
   const canPost = () => !!(fu && mine && !mine.banned);
-  const write = (parent, done) => canPost() ? sheet(parent, done) : fu && mine?.banned ? toast("Аккаунт заблокирован.", 1) : needLogin();
+  const write = (parent, done) => canPost() ? sheet(parent, done, parent ? "" : topic) : fu && mine?.banned ? toast("Аккаунт заблокирован.", 1) : needLogin();
   const show = (...els) => { wrap.replaceChildren(...els); wrap.classList.remove("vw"); void wrap.offsetWidth; wrap.classList.add("vw"); };
   const refresh = () => fcur(), view = fn => { fcur = fn; fn(); };
+  const feedHash = () => "#forum" + (tab === "sub" ? "/sub" : topic ? "/t/" + topic : "");
+  const tq = q => topic ? q.like("body", "#" + FTOPICS.find(t => t.k === topic).l + "%") : q;
   const link = path => location.origin + location.pathname + "#forum/" + path;
   const to = (fn, path) => { history.pushState({f:1}, "", "#forum/" + path); window.scrollTo(0, 0); view(fn); };
-  const back = () => { window.scrollTo(0, 0); if (history.state?.f) history.back(); else { history.replaceState(null, "", "#forum"); tab = "all"; showFeed(); } };
-  const C = {open:p => to(() => showThread(p), "p/" + p.id), reply:p => write(p.id, refresh), after:refresh, prof:name => to(() => showProfile(name), "u/" + name)};
+  const back = () => { window.scrollTo(0, 0); if (history.state?.f) history.back(); else { history.replaceState(null, "", "#forum"); tab = "all"; topic = ""; showFeed(); } };
+  const C = {topic:k => { topic = k; tab = "all"; to(showFeed, "t/" + k); }, open:p => to(() => showThread(p), "p/" + p.id), reply:p => write(p.id, refresh), after:refresh, prof:name => to(() => showProfile(name), "u/" + name)};
   const skel = n => h("div", {}, ...Array.from({length:n}, () => h("div", {class:"tw-row sk-row"}, h("div", {class:"av sk"}), h("div", {class:"tw-main"}, h("div", {class:"sk l1"}), h("div", {class:"sk l2"}), h("div", {class:"sk l3"})))));
   const backHdr = t => h("div", {class:"fh"}, h("button", {class:"ib", type:"button", "aria-label":"Назад", onclick:back}, ic("back")), h("b", {}, t));
   const empty = t => h("p", {class:"empty", style:"padding:1.2rem .9rem"}, t);
@@ -303,21 +315,25 @@ async function forum(box) {
 
   async function showFeed() {
     fcur = showFeed; bell = null;
-    const tabs = h("div", {class:"ftabs"}, ...[["all", "Все"], ["sub", "Подписки"]].map(([k, l]) => h("button", {type:"button", class:tab === k ? "on" : "", onclick:() => { if (tab !== k) { tab = k; history.replaceState(history.state, "", "#forum" + (k === "sub" ? "/sub" : "")); showFeed(); } }}, l)));
+    const tabs = h("div", {class:"ftabs"}, ...[["all", "Все"], ["sub", "Подписки"]].map(([k, l]) => h("button", {type:"button", class:tab === k ? "on" : "", onclick:() => { if (tab !== k) { tab = k; history.replaceState(history.state, "", feedHash()); showFeed(); } }}, l)));
     const badge = h("span", {class:"dot", style:"display:none"});
+    const tbar = h("div", {class:"topics", role:"tablist", "aria-label":"Темы"}, ...[{k:"", l:"Все темы", e:"✦"}, ...FTOPICS].map((t, i) => { const on = topic === t.k;
+      const b = h("button", {type:"button", role:"tab", class:"tp" + (on ? " on" : ""), "aria-selected":String(on), onclick:() => { if (topic === t.k) return; topic = t.k; history.replaceState(history.state, "", feedHash()); showFeed(); }}, h("span", {"aria-hidden":"true"}, t.e), t.l);
+      b.style.setProperty("--i", i); return b; }));
     top.replaceChildren(h("div", {class:"ftop"}, tabs,
       h("button", {class:"ib sq", type:"button", "aria-label":"Поиск людей", onclick:() => to(showSearch, "s")}, ic("search")),
       fu ? h("button", {class:"ib sq rel", type:"button", "aria-label":"Уведомления", onclick:() => to(showNotifs, "n")}, ic("bell"), badge) : null,
-      mine ? h("button", {class:"avbtn", type:"button", "aria-label":"Мой профиль", onclick:() => C.prof(mine.username)}, avatar(mine, "avlink")) : null));
+      mine ? h("button", {class:"avbtn", type:"button", "aria-label":"Мой профиль", onclick:() => C.prof(mine.username)}, avatar(mine, "avlink")) : null), tbar);
+    requestAnimationFrame(() => { const on = tbar.querySelector(".on"); if (on) tbar.scrollLeft = on.offsetLeft - (tbar.clientWidth - on.offsetWidth) / 2; });
     bell = badge; msgBar(mine?.banned ? null : fu ? "Что нового?" : "Войди, чтобы писать", () => write(null, refresh));
     if (fu) { const poll = async () => { if (!document.body.contains(top)) return clearInterval(fnTimer); const { data } = await db.rpc("forum_unread"); setBell(data || 0); }; poll(); clearInterval(fnTimer); fnTimer = setInterval(poll, 60000); }
     if (tab === "sub") {
       if (!fu) return show(empty("Войди, чтобы видеть публикации тех, на кого подписан."));
       const { data } = await db.from("follows").select("following").eq("follower", fu.id).limit(150), ids = (data || []).map(x => x.following);
       if (!ids.length) return show(empty("Ты пока ни на кого не подписан. Найди людей через поиск или нажми на имя автора под постом."));
-      return show(withMore(C, q => q.is("parent_id", null).in("author", ids), "Пока нет постов от тех, на кого ты подписан."));
+      return show(withMore(C, q => tq(q.is("parent_id", null).in("author", ids)), "Пока нет постов от тех, на кого ты подписан."));
     }
-    show(withMore(C, q => q.is("parent_id", null), "Пока тихо. Напиши первым!"));
+    show(withMore(C, q => tq(q.is("parent_id", null)), topic ? "В этой теме пока тихо. Напиши первым!" : "Пока тихо. Напиши первым!"));
   }
 
   async function showThread(p0) {
@@ -407,7 +423,7 @@ async function forum(box) {
       const pr = {username:n.username, display_name:n.display_name, avatar_path:n.avatar_path}, av = avatar(pr, "avlink");
       const txt = n.kind === "follow" ? " подписался на тебя" : n.kind === "like" ? " оценил твой пост" : " ответил тебе";
       const el = h("div", {class:"tw-row nt" + (new Date(n.ts) > seen ? " new" : ""), onclick:() => n.kind === "follow" ? C.prof(n.username) : C.open({id:n.post_id})}, h("div", {class:"avcol"}, av),
-        h("div", {class:"tw-main"}, h("div", {class:"tw-top"}, h("b", {}, nameOf(pr)), h("span", {}, txt), h("span", {class:"meta"}, "· " + ago(n.ts))), n.snippet ? h("div", {class:"tw-txt nsn"}, n.snippet) : null));
+        h("div", {class:"tw-main"}, h("div", {class:"tw-top"}, h("b", {}, nameOf(pr)), h("span", {}, txt), h("span", {class:"meta"}, "· " + ago(n.ts))), n.snippet ? h("div", {class:"tw-txt nsn"}, splitTopic(n.snippet).text || n.snippet) : null));
       el.style.setProperty("--i", Math.min(i, 8)); av.onclick = e => { e.stopPropagation(); C.prof(n.username); }; return el;
     });
     show(...(rows.length ? rows : [empty("Пока ничего нет. Лайки, ответы и новые подписчики появятся здесь.")]));
@@ -419,6 +435,7 @@ async function forum(box) {
   else if (k === "u" && /^[a-z0-9_]{3,20}$/.test(a || "")) view(() => b === "followers" || b === "following" ? showPeople(a, b) : showProfile(a));
   else if (k === "n") view(showNotifs);
   else if (k === "s") view(showSearch);
+  else if (k === "t" && FTOPICS.some(t => t.k === a)) { topic = a; tab = "all"; showFeed(); }
   else { tab = k === "sub" ? "sub" : "all"; showFeed(); }
 }
 
