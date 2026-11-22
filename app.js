@@ -7,11 +7,9 @@ const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Вла�
 const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
 const PL = {discord:"Discord", telegram:"Telegram"};
 let FPATH = "";
-const ROUTES = ["home", "info", "team", "forum", "market", "update", "staff", "login"];
+const ROUTES = ["home", "info", "team", "forum", "update", "staff", "login"];
 const WARN = "Перед тем как отправить заявку, убедитесь, что вы выбрали достижение, которое нужно. Просим вас не выбирать случайное достижение и не писать в комментарии о другом, которого нет в списке. Если вы так поступите, ваша заявка будет удалена.";
 
-/* своя картинка вместо тыквы: положите pumpkin.png рядом с index.html */
-(() => { const im = new Image(); im.onload = () => { document.documentElement.style.setProperty("--pk", 'url("pumpkin.png")'); document.documentElement.classList.add("has-pk"); }; im.src = "pumpkin.png"; })();
 
 const $ = id => document.getElementById(id);
 const h = (t, p = {}, ...k) => {
@@ -112,8 +110,8 @@ const navIcon = (v, sym) => {
   im.src = src(); return s;
 };
 function drawNav() {
-  const nb = (v, sym, l) => h("button", {"data-v":v, onclick:() => go(v)}, navIcon(v, sym), h("span", {}, l));
-  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("info", "?", "Инфо"), nb("team", "★", "Помощники"), nb("forum", "☰", "Форум"), nb("market", "◈", "Маркет"), nb("update", "◷", "Обновление"), ...(me ? [nb("staff", "☺", "Панель")] : []));
+  const nb = (v, sym, l, off) => h("button", off ? {"data-v":v, class:"off", disabled:"", "aria-disabled":"true", title:"Скоро"} : {"data-v":v, onclick:() => go(v)}, navIcon(v, sym), h("span", {}, l), off ? h("span", {class:"soon-b"}, "скоро") : null);
+  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("info", "?", "Инфо"), nb("team", "★", "Помощники"), nb("forum", "☰", "Форум"), nb("update", "◷", "Обновление", true), ...(me ? [nb("staff", "☺", "Панель")] : []));
   $("fl").replaceChildren(...(me ? [] : [h("a", {href:"#login", class:"lk", onclick:e => { e.preventDefault(); go("login"); }}, "Вход для персонала")]));
 }
 /* общая шторка: закрытие по фону, Escape и с анимацией */
@@ -137,18 +135,18 @@ async function drawFoot() {
 }
 async function go(v) {
   const full = String(v); v = full.split("/")[0]; FPATH = full.slice(v.length + 1);
-  if (!ROUTES.includes(v)) { v = "home"; FPATH = ""; }
+  if (!ROUTES.includes(v) || v === "update") { v = "home"; FPATH = ""; } // «Обновление» временно закрыто
   if (v === "staff" && !me) v = "login";
   document.getElementById("fbar")?.remove(); document.querySelector(".sheet-bd")?.remove(); document.body.classList.remove("lock");
   const box = h("div");
   $("app").className = (v === "staff" ? "wide " : "") + "v-" + v;
   $("app").replaceChildren(box);
   document.querySelectorAll("#nav button").forEach(b => { const on = b.dataset.v === v; b.classList.toggle("cur", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"); if (on) try { b.scrollIntoView({inline:"center", block:"nearest"}); } catch (_) {} });
-  const hv = (v === "forum" || v === "market") && FPATH ? v + "/" + FPATH : v; if (location.hash.slice(1) !== hv) history.pushState(null, "", "#" + hv);
+  const hv = v === "forum" && FPATH ? v + "/" + FPATH : v; if (location.hash.slice(1) !== hv) history.pushState(null, "", "#" + hv);
   window.scrollTo(0, 0); clearInterval(timer); document.title = TITLE;
   try {
     if (v === "home") await home(box); else if (v === "login") login(box); else if (v === "info") how(box);
-    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box); else if (v === "market") await marketView(box);
+    else if (v === "team") await team(box); else if (v === "forum") await forum(box); else if (v === "update") updateView(box);
     else await staffView(box);
   } catch (e) { console.error(e); box.replaceChildren(h("h1", {}, "Ошибка"), h("p", {class:"sub"}, "Не удалось загрузить страницу. Обнови её.")); }
 }
@@ -329,15 +327,6 @@ async function team(box) {
   box.append(h("h1", {}, "Помощники"), h("p", {class:"sub"}, "Нажми на помощника, чтобы увидеть его статистику"));
   const list = h("div", {class:"tgrid"}, ...[0, 1, 2, 3].map(() => h("div", {class:"tm sk-card"}, h("div", {class:"av sk"}), h("div", {class:"tmi"}, h("div", {class:"sk l1"}), h("div", {class:"sk l2"})))));
   box.append(list);
-  const gbox = h("div"); box.append(gbox);
-  db.rpc("market_guarantor_list").then(({ data, error }) => { // отдельные помощники «Гарант» (маркет); без market.sql блок не показывается
-    if (error || !data?.length || !gbox.isConnected) return;
-    gbox.replaceChildren(h("h2", {style:"margin:1.4rem 0 .2rem"}, "Гаранты"), h("p", {class:"sub"}, "Проводят обмены в маркете"),
-      h("div", {class:"tgrid"}, ...data.map(g => h("button", {type:"button", class:"tm", "aria-label":"Гарант " + (g.display_name || g.username), onclick:() => go("market/g")},
-        h("div", {class:"av tmav"}, initial(g.display_name || g.username)),
-        h("div", {class:"tmi"}, h("div", {class:"tmn"}, h("b", {}, g.display_name || g.username), h("span", {class:"badge"}, "Гарант")), h("div", {class:"meta"}, "Обменов проведено: " + g.deals_done)),
-        h("span", {class:"chev", "aria-hidden":"true"}, "›")))));
-  });
   const rows = await loadTeam();
   if (!rows.length) { list.replaceChildren(h("p", {class:"empty"}, "Пока никого.")); return; }
   list.replaceChildren(...rows.map((x, i) => {
@@ -640,16 +629,6 @@ async function subBlacklist(box) {
 window.addEventListener("popstate", () => { const hs = location.hash.slice(1); if (hs === "team" && document.querySelector(".sheet-bd.hl, .sheet-bd.hs")) return closeSheet(); go(hs); });
 db.auth.onAuthStateChange(ev => { if (ev === "SIGNED_OUT" && me) { me = null; drawNav(); go("login"); } });
 $("logo").onclick = () => go("home");
-/* пасхалка: тыква в логотипе вздрагивает, а после 5 нажатий открывается чат в Telegram */
-(() => {
-  const pk = $("pkbtn"); if (!pk) return; let n = 0, t = 0;
-  pk.addEventListener("click", e => {
-    e.stopPropagation(); clearTimeout(t); n++;
-    pk.classList.remove("shake"); void pk.offsetWidth; pk.classList.add("shake");
-    if (n >= 5) { n = 0; const a = h("a", {href:"https://t.me/Doors_Roblox_Chat_RU", target:"_blank", rel:"noopener noreferrer"}); document.body.append(a); a.click(); a.remove(); return; }
-    t = setTimeout(() => { n = 0; }, 3000); // пауза больше 3 секунд сбрасывает счёт
-  });
-})();
 (async () => {
   const m = location.hash.match(/^#t=([0-9a-f-]{36})$/i);
   if (m) { if (!toks().includes(m[1])) saveToks([...toks(), m[1]]); history.replaceState(null, "", location.pathname); }
