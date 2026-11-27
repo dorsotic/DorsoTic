@@ -7,7 +7,7 @@ const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Вла�
 const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
 const PL = {discord:"Discord", telegram:"Telegram"};
 let FPATH = "";
-const UPDATE_OPEN = false; // true — открыть вкладку «Обновление»
+const UPDATE_OPEN = true;  // true — открыть вкладку «Обновление»
 const ROUTES = ["home", "info", "team", "forum", "update", "staff", "login"];
 const WARN = "Перед тем как отправить заявку, убедитесь, что вы выбрали достижение, которое нужно. Просим вас не выбирать случайное достижение и не писать в комментарии о другом, которого нет в списке. Если вы так поступите, ваша заявка будет удалена.";
 
@@ -179,7 +179,7 @@ function probeImg(base, ok, none) { // ищет файл base.<формат> с�
   im.onload = () => ok(im.src); im.onerror = () => { if (++i < ICON_EXT.length) im.src = `${base}.${ICON_EXT[i]}`; else none && none(); };
   im.src = `${base}.${ICON_EXT[0]}`;
 }
-function lightbox(src) {
+function evLightbox(src) {
   const o = h("div", {class:"lbx", role:"dialog", "aria-label":"Просмотр фото", tabindex:"-1"}, h("img", {src, alt:""}));
   const close = () => { o.remove(); document.removeEventListener("keydown", esc); }, esc = e => { if (e.key === "Escape") close(); };
   o.onclick = close; document.addEventListener("keydown", esc); document.body.append(o); o.focus();
@@ -188,7 +188,7 @@ function gallery(id) {
   const wrap = h("div", {class:"gal"}), empty = h("p", {class:"meta", style:"text-align:center"}, "Фото отчёта скоро появятся.");
   let n = 1;
   const next = () => probeImg(`updates/${id}/${n}`, src => {
-    empty.remove(); wrap.append(h("figure", {onclick:() => lightbox(src), style:`--i:${n}`}, h("img", {src, alt:`Фото ${n}`, loading:"lazy"}))); if (++n <= 30) next();
+    empty.remove(); wrap.append(h("figure", {onclick:() => evLightbox(src), style:`--i:${n}`}, h("img", {src, alt:`Фото ${n}`, loading:"lazy"}))); if (++n <= 30) next();
   });
   next(); return h("div", {}, wrap, empty);
 }
