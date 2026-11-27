@@ -1,12 +1,13 @@
 "use strict";
 const SB_URL = "https://swdmjwgwripgpcnglhse.supabase.co";
 const SB_KEY = "sb_publishable_hv4OhCNL1n8A5pbs526FpQ_hX7o6xmb";
-const SITE_VERSION = "2.23-5a";
+const SITE_VERSION = "2.23-1";
 const TITLE = "Достижения DOORS: помощь с ачивками — DorsoTic";
 const ROLE = {moderator:"Модератор", admin:"Админ", owner:"Владелец"};
 const ST = {new:"Новая", in_progress:"Выполняется", waiting:"Ожидание", closed:"Закрыта"};
 const PL = {discord:"Discord", telegram:"Telegram"};
 let FPATH = "";
+const UPDATE_OPEN = false; // true — открыть вкладку «Обновление»
 const ROUTES = ["home", "info", "team", "forum", "update", "staff", "login"];
 const WARN = "Перед тем как отправить заявку, убедитесь, что вы выбрали достижение, которое нужно. Просим вас не выбирать случайное достижение и не писать в комментарии о другом, которого нет в списке. Если вы так поступите, ваша заявка будет удалена.";
 
@@ -111,7 +112,7 @@ const navIcon = (v, sym) => {
 };
 function drawNav() {
   const nb = (v, sym, l, off) => h("button", off ? {"data-v":v, class:"off", disabled:"", "aria-disabled":"true", title:"Скоро"} : {"data-v":v, onclick:() => go(v)}, navIcon(v, sym), h("span", {}, l), off ? h("span", {class:"soon-b"}, "скоро") : null);
-  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("info", "?", "Инфо"), nb("team", "★", "Помощники"), nb("forum", "☰", "Форум"), nb("update", "◷", "Обновление", true), ...(me ? [nb("staff", "☺", "Панель")] : []));
+  $("nav").replaceChildren(nb("home", "✎", "Заявка"), nb("info", "?", "Инфо"), nb("team", "★", "Помощники"), nb("forum", "☰", "Форум"), nb("update", "◷", "Обновление", !UPDATE_OPEN), ...(me ? [nb("staff", "☺", "Панель")] : []));
   $("fl").replaceChildren(...(me ? [] : [h("a", {href:"#login", class:"lk", onclick:e => { e.preventDefault(); go("login"); }}, "Вход для персонала")]));
 }
 /* общая шторка: закрытие по фону, Escape и с анимацией */
@@ -135,7 +136,7 @@ async function drawFoot() {
 }
 async function go(v) {
   const full = String(v); v = full.split("/")[0]; FPATH = full.slice(v.length + 1);
-  if (!ROUTES.includes(v) || v === "update") { v = "home"; FPATH = ""; } // «Обновление» временно закрыто
+  if (!ROUTES.includes(v) || (v === "update" && !UPDATE_OPEN)) { v = "home"; FPATH = ""; } // «Обновление» временно закрыто
   if (v === "staff" && !me) v = "login";
   document.getElementById("fbar")?.remove(); document.querySelector(".sheet-bd")?.remove(); document.body.classList.remove("lock");
   const box = h("div");
@@ -164,37 +165,64 @@ function countUp(el, to) {
 }
 const tile = (label, val) => { const n = h("span", {}, "0"); countUp(n, val); return h("div", {class:"stat"}, n, label); };
 
-/* ---------- обновление: The Candy Vault ---------- */
-const CV = {start:"2026-10-22T21:00:00+03:00", end:"2026-11-09T07:55:00+03:00"}; // время МСК (UTC+3)
-function updateView(box) {
-  const t0 = Date.parse(CV.start), t1 = Date.parse(CV.end);
+/* ---------- обновления ---------- */
+/* Чтобы добавить новое событие, допишите объект в начало списка EVENTS. Время указывается по МСК (+03:00).
+   Фото отчёта: положите файлы в папку updates/<id>/ с названиями 1, 2, 3… (png, jpg, webp, svg, gif) — они подтянутся сами.
+   Обложка: updates/<id>/cover.<формат> (необязательно). */
+const EVENTS = [
+  {id:"black-friday", title:"Black Friday Weekend", sub:"Распродажа в DOORS и временно открытые подэтажи", start:"2026-11-27T22:00:00+03:00", end:"2026-11-30T07:55:00+03:00", gal:true,
+   items:["Скидка 50% на скины предметов (только Knobs)", "Скидка 33% на админ-панель", "Скидка 25% на Stardust", "Новые скины предметов", "Все подэтажи временно открыты…"]},
+  {id:"candy-vault", title:"The Candy Vault", sub:"Обновление DOORS", start:"2026-10-22T21:00:00+03:00", end:"2026-11-09T07:55:00+03:00", img:"candy-vault.webp", imgSize:[768, 432]}
+];
+function probeImg(base, ok, none) { // ищет файл base.<формат> среди ICON_EXT
+  let i = 0; const im = new Image();
+  im.onload = () => ok(im.src); im.onerror = () => { if (++i < ICON_EXT.length) im.src = `${base}.${ICON_EXT[i]}`; else none && none(); };
+  im.src = `${base}.${ICON_EXT[0]}`;
+}
+function lightbox(src) {
+  const o = h("div", {class:"lbx", role:"dialog", "aria-label":"Просмотр фото", tabindex:"-1"}, h("img", {src, alt:""}));
+  const close = () => { o.remove(); document.removeEventListener("keydown", esc); }, esc = e => { if (e.key === "Escape") close(); };
+  o.onclick = close; document.addEventListener("keydown", esc); document.body.append(o); o.focus();
+}
+function gallery(id) {
+  const wrap = h("div", {class:"gal"}), empty = h("p", {class:"meta", style:"text-align:center"}, "Фото отчёта скоро появятся.");
+  let n = 1;
+  const next = () => probeImg(`updates/${id}/${n}`, src => {
+    empty.remove(); wrap.append(h("figure", {onclick:() => lightbox(src), style:`--i:${n}`}, h("img", {src, alt:`Фото ${n}`, loading:"lazy"}))); if (++n <= 30) next();
+  });
+  next(); return h("div", {}, wrap, empty);
+}
+function evCard(ev) {
+  const t0 = Date.parse(ev.start), t1 = Date.parse(ev.end);
   const nums = ["дней", "часов", "минут", "секунд"].map(l => { const n = h("span", {}, "00"); return {n, el:h("div", {class:"stat"}, n, l)}; });
-  const cap = h("div", {class:"sub", style:"margin:.2rem 0 0"}), state = h("div", {class:"warning-caption", style:"margin-top:.9rem"}), pb = h("i"), pbar = h("div", {class:"bar cvbar", hidden:""}, pb);
+  const cap = h("div", {class:"sub", style:"margin:.2rem 0 0;text-align:center"}), state = h("div", {class:"warning-caption", style:"margin-top:.9rem"}), pb = h("i"), pbar = h("div", {class:"bar cvbar", hidden:""}, pb);
+  const cd = h("div", {class:"stats cd"}, nums.map(x => x.el));
   const when = d => new Date(d).toLocaleString("ru-RU", {dateStyle:"long", timeStyle:"short"});
   const tick = () => {
     const now = Date.now(); let left, st, c;
-    if (now < t0) { left = t0 - now; st = "До начала обновления"; c = "Старт: " + when(t0); }
-    else if (now < t1) { left = t1 - now; st = "Обновление уже идёт!"; c = "Событие закончится: " + when(t1); }
+    if (now < t0) { left = t0 - now; st = "До начала"; c = "Старт: " + when(t0); }
+    else if (now < t1) { left = t1 - now; st = "Событие идёт!"; c = "Закончится: " + when(t1); }
     else { left = 0; st = "Событие завершилось"; c = "Закончилось: " + when(t1); }
     const s = Math.floor(left / 1000), v = [Math.floor(s / 86400), Math.floor(s % 86400 / 3600), Math.floor(s % 3600 / 60), s % 60];
     nums.forEach((x, i) => x.n.textContent = String(v[i]).padStart(2, "0"));
-    state.textContent = st; cap.textContent = c;
+    state.textContent = st; cap.textContent = c; cd.hidden = now >= t1;
     const run = now >= t0 && now < t1; pbar.hidden = !run; if (run) pb.style.width = ((now - t0) / (t1 - t0) * 100).toFixed(2) + "%";
     state.classList.toggle("live", run);
   };
-  tick(); clearInterval(timer); timer = setInterval(tick, 1000);
-  document.title = "The Candy Vault — " + TITLE;
-  box.append(
-    h("h1", {}, "The Candy Vault"),
-    h("p", {class:"sub"}, "Новое обновление DOORS"),
-    h("div", {class:"door cv"},
-      h("img", {src:"candy-vault.webp", alt:"The Candy Vault — DOORS", width:"768", height:"432", class:"cv-img"}),
-      state,
-      h("div", {class:"stats cd"}, nums.map(x => x.el)),
-      pbar, cap,
-      h("p", {class:"meta", style:"text-align:center;margin-top:.7rem"}, "Подробности скоро…")
-    )
-  );
+  const cover = h("img", {class:"cv-img ev-cover", alt:ev.title, hidden:""});
+  if (ev.img) { cover.src = ev.img; cover.hidden = false; if (ev.imgSize) { cover.width = ev.imgSize[0]; cover.height = ev.imgSize[1]; } }
+  else probeImg(`updates/${ev.id}/cover`, src => { cover.src = src; cover.hidden = false; });
+  const el = h("div", {class:"door cv ev"}, cover, h("h2", {class:"ev-t"}, ev.title), h("p", {class:"meta", style:"text-align:center"}, ev.sub), state, cd, pbar, cap,
+    ev.items ? h("div", {class:"ev-l"}, h("h3", {}, "Что нового"), h("ul", {}, ev.items.map(x => h("li", {}, x)))) : null,
+    ev.gal ? h("div", {class:"ev-l"}, h("h3", {}, "Отчёт"), gallery(ev.id)) : null);
+  tick(); return {el, tick, done:Date.now() >= t1};
+}
+function updateView(box) {
+  const cards = EVENTS.map(evCard), cur = cards.filter(c => !c.done), old = cards.filter(c => c.done);
+  clearInterval(timer); timer = setInterval(() => cards.forEach(c => c.tick()), 1000);
+  document.title = "Обновления — " + TITLE;
+  box.append(h("h1", {}, "Обновления"), h("p", {class:"sub"}, "События и обновления DOORS"), ...cur.map(c => c.el),
+    old.length ? (() => { const d = h("details", {class:"ev-old"}, h("summary", {}, `Прошлые обновления (${old.length})`), ...old.map(c => c.el)); d.open = !cur.length; return d; })() : null);
 }
 
 /* ---------- выбор достижений ---------- */
